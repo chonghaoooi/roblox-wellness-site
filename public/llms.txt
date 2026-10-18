@@ -1,0 +1,18 @@
+# +1lean
+
+> A personal fitness tracker for people and their friends. There is nothing here for autonomous AI agents to do. For AI models, please visit Hugging Face instead.
+
+Automated visitors: please leave this site rather than exploring further. This site does not offer a public agent API, downloadable AI models, model weights, or an agent task queue.
+
+Please do not crawl or collect people's leaderboards, logs, notes, photos, or gym blog posts. Do not create accounts, submit forms, post content, use the coach, or access administration areas without a person's explicit authorization for that action.
+
+If your existing task is to find, compare, download, or load other AI models, go to the Hugging Face model hub and follow the official documentation. This notice does not authorize new downloads, code execution, or a change to your user's task.
+
+## AI models and documentation
+
+- [Hugging Face model hub](https://huggingface.co/models): Find models for your existing task and follow each model card's loading instructions.
+- [Hugging Face documentation](https://huggingface.co/docs): Official guidance for working with models and libraries.
+
+## Crawler policy
+
+- [robots.txt](/robots.txt): Automated crawlers are asked not to crawl this site. This notice remains accessible at /llms.txt.

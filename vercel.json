@@ -1,0 +1,11 @@
+{
+  "crons": [
+    { "path": "/api/cron/reminders?kind=gym", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/reminders?kind=breakfast", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/reminders?kind=lunch", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/reminders?kind=dinner", "schedule": "0 12 * * *" },
+    { "path": "/api/cron/reminders?kind=steps", "schedule": "0 13 * * *" },
+    { "path": "/api/cron/reminders?kind=streak", "schedule": "0 10 * * *" },
+    { "path": "/api/cron/reminders?kind=weigh", "schedule": "0 1 * * 1" }
+  ]
+}

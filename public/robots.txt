@@ -1,0 +1,4 @@
+# This site is for people. AI-agent guidance: /llms.txt
+User-agent: *
+Disallow: /
+Allow: /llms.txt

@@ -1,0 +1,9 @@
+.env*
+!.env.example
+*.tsbuildinfo
+.next
+node_modules
+.vercel
+design
+native
+capacitor.config.ts

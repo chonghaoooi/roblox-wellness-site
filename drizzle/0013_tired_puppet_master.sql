@@ -1,0 +1,2 @@
+ALTER TABLE "logs" ADD COLUMN "tracker_synced_at" timestamp with time zone;--> statement-breakpoint
+CREATE UNIQUE INDEX "logs_tracker_daily_idx" ON "logs" USING btree ("user_id","date","source") WHERE "logs"."kind" = 'steps' and "logs"."source" in ('apple_health', 'health_connect');

@@ -15,7 +15,7 @@ export default async function GymPage() {
   const [boards, dayRows, posts, checkedIn, settings] = await Promise.all([
     gymBoards(today),
     todayRows(today),
-    gymPosts(),
+    gymPosts(30, user?.id),
     user ? hasGymCheckIn(user.id, today) : false,
     user ? getSettings(user.id) : null,
   ]);

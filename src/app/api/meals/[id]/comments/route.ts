@@ -46,7 +46,7 @@ export async function POST(request: Request, { params }: Context) {
     and (select count(*) from meal_comments where user_id = ${user.id} and created_at > now() - interval '1 hour') < 30
     returning id, text, created_at::text as "createdAt"`);
   if (!result.rows.length) return reply({ error: "This meal was removed, or you've reached 30 comments this hour. Try again later." }, 409);
-  revalidatePath("/meals");
+  revalidatePath("/posts");
   return reply({ comment: { ...result.rows[0], username: user.username, mine: true } }, 201);
 }
 
@@ -60,6 +60,6 @@ export async function DELETE(request: Request, { params }: Context) {
   const result = await requireDb().execute(sql`delete from meal_comments where id = ${Number(comment)}
     and meal_id = ${Number(id)} and user_id = ${user.id} returning id`);
   if (!result.rows.length) return reply({ error: "You can only remove your own comments." }, 403);
-  revalidatePath("/meals");
+  revalidatePath("/posts");
   return reply({ ok: true });
 }

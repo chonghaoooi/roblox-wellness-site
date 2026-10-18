@@ -98,6 +98,31 @@ export async function reactToMeal(jpeg: Buffer, ctx: { username: string; calorie
   return { vote: r.vote === "down" ? "down" : "up", comment };
 }
 
+export type GymReactionInput = { username: string; notes: string | null; lifts: { name: string; kg: number; reps: number; bodyweight: boolean }[] };
+
+/** adil bot's take on a workout post. The photo is optional; without one it reacts to the notes and lifts. */
+export async function reactToGym(ctx: GymReactionInput, jpeg: Buffer | null): Promise<MealReaction> {
+  const lifts = ctx.lifts.map((l) => `${l.name} ${l.bodyweight && l.kg === 0 ? "bodyweight" : `${l.bodyweight ? "+" : ""}${Math.round(l.kg * 10) / 10}kg`} x ${l.reps}`).join("; ") || "none listed";
+  const prompt =
+    `You are "adil bot", a casual texting-style bot (not the real Adil) reacting to a workout a friend just posted in a fitness app for friends. ` +
+    `Poster: ${ctx.username}. Lifts: ${lifts}. Notes: ${JSON.stringify((ctx.notes ?? "").slice(0, 600))}. ` +
+    (jpeg ? "A workout photo is attached. " : "") +
+    `Vote "up" for nearly any real effort (showing up counts); only vote "down" for something clearly unsafe or sloppy, and then say why kindly. ` +
+    `The comment is ONE short lowercase message under 110 characters, hype and specific to the lifts or notes. Never mention anyone's body, weight or looks, never shame, no skull emoji, no hashtags. ` +
+    'JSON: {"vote": "up" or "down", "comment": string}.';
+  let r: { vote?: string; comment?: string };
+  if (jpeg) r = (await askAboutImage(jpeg, prompt)) as typeof r;
+  else {
+    const text = await chat("Reply with ONLY a JSON object, no other text.", [{ role: "user", content: prompt }]);
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error("AI gave no JSON");
+    r = JSON.parse(m[0]);
+  }
+  const comment = String(r.comment ?? "").replace(/\s+/g, " ").trim().slice(0, 140);
+  if (!comment) throw new Error("no comment");
+  return { vote: r.vote === "down" ? "down" : "up", comment };
+}
+
 /** Read today's step total off a screenshot of a phone step counter / health app. */
 export async function readSteps(jpeg: Buffer): Promise<number> {
   const r = (await askAboutImage(

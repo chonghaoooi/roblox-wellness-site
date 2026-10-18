@@ -169,6 +169,24 @@ export const mealComments = pgTable("meal_comments", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index("meal_comments_meal_idx").on(t.mealId, t.id), index("meal_comments_user_idx").on(t.userId, t.createdAt)]);
 
+export const gymPostVotes = pgTable(
+  "gym_post_votes",
+  {
+    postId: integer("post_id").notNull().references(() => gymPosts.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    value: integer("value").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.postId, t.userId] }), index("gym_post_votes_user_idx").on(t.userId), check("gym_post_votes_value_check", sql`${t.value} in (-1, 1)`)],
+);
+
+export const gymPostComments = pgTable("gym_post_comments", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => gymPosts.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index("gym_post_comments_post_idx").on(t.postId, t.id), index("gym_post_comments_user_idx").on(t.userId, t.createdAt)]);
+
 export const coachMessages = pgTable(
   "coach_messages",
   {

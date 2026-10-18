@@ -330,16 +330,34 @@ export type GymPost = {
   hasPhoto: boolean;
   createdAt: string;
   lifts: { exercise: string; kg: number; reps: number }[];
+  upVotes: number;
+  downVotes: number;
+  myVote: number;
+  commentCount: number;
+  commentText: string | null;
+  commentAuthor: string | null;
 };
 
 /** Latest gym blog posts with the lifts logged in each. Photos are served by /api/gym/[id]. */
-export async function gymPosts(limit = 30): Promise<GymPost[]> {
+export async function gymPosts(limit = 30, viewerId?: number): Promise<GymPost[]> {
   return rows<GymPost>(sql`
     select p.id, u.username, p.date::text as date, p.notes, (p.photo_b64 is not null) as "hasPhoto",
            p.created_at::text as "createdAt",
            coalesce((select json_agg(json_build_object('exercise', l.exercise, 'kg', l.lift_kg, 'reps', l.reps) order by l.id)
-                     from logs l where l.post_id = p.id), '[]'::json) as lifts
+                     from logs l where l.post_id = p.id), '[]'::json) as lifts,
+           v.up as "upVotes", v.down as "downVotes", v.mine as "myVote",
+           coalesce(c.total, 0)::int as "commentCount", c.text as "commentText", c.username as "commentAuthor"
     from gym_posts p join users u on u.id = p.user_id
+    left join lateral (
+      select (count(*) filter (where value=1))::int as up,
+        (count(*) filter (where value=-1))::int as down,
+        coalesce(max(value) filter (where user_id=${viewerId ?? 0}), 0)::int as mine
+      from gym_post_votes where post_id=p.id
+    ) v on true
+    left join lateral (
+      select c.text, cu.username, count(*) over () as total
+      from gym_post_comments c join users cu on cu.id = c.user_id where c.post_id = p.id order by c.id desc limit 1
+    ) c on true
     order by p.created_at desc limit ${limit}`);
 }
 

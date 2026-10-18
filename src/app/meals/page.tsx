@@ -1,17 +1,6 @@
-import { MealGallery } from "@/components/MealGallery";
-import { LogFab } from "@/components/LogFab";
-import { getUser } from "@/lib/auth";
-import { recentMeals } from "@/lib/queries";
+import { redirect } from "next/navigation";
 
-export const metadata = { title: "Meals" };
-export const dynamic = "force-dynamic";
-export const maxDuration = 300;
-
-export default async function MealsPage() {
-  const user = await getUser();
-  const meals = await recentMeals(user?.id);
-  return <>
-    <MealGallery meals={meals} me={user?.username} />
-    <LogFab href={user ? "/log#meal" : "/login"} />
-  </>;
+// Meals and workouts now share the Posts page. Browsers keep the #fragment through the redirect, so old links still land on the right card.
+export default function MealsPage() {
+  redirect("/posts");
 }

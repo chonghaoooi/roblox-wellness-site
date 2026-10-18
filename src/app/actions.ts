@@ -11,13 +11,13 @@ import { COACH_SYSTEM, formatCoachContext } from "@/lib/coach";
 import { userAverages, userEntries, userGymWeeks, userGymStreak, userLifts } from "@/lib/queries";
 import { createSession, destroySession, getSettings, getUser } from "@/lib/auth";
 import { addDays, todayStr } from "@/lib/dates";
-import { isBodyweight, parseLiftRows } from "@/lib/lifts";
-import { adilbotReacts } from "@/lib/adilbot";
+import { EXERCISES, type Exercise, isBodyweight, parseLiftRows } from "@/lib/lifts";
+import { adilbotReacts, adilbotReactsToGym } from "@/lib/adilbot";
 import { notifyActivity, removeCurrentPushDevice } from "@/lib/push";
 import { type FormState, loginSchema, manualStepsSchema, mealSchema, settingsSchema, signupSchema, toFieldErrors, weighInSchema } from "@/lib/validation";
 
 function refreshActivityPages() {
-  for (const path of ["/", "/meals", "/gym", "/trends", "/log"]) revalidatePath(path);
+  for (const path of ["/", "/posts", "/gym", "/trends", "/log"]) revalidatePath(path);
 }
 
 const obj = (fd: FormData) => Object.fromEntries(fd.entries()) as Record<string, string>;
@@ -338,7 +338,14 @@ export async function addWorkout(_: FormState, fd: FormData): Promise<FormState>
     select exists(select 1 from check_in) as "newCheckIn", (select id from post) as "postId", (select id from check_in) as "checkInId"
   `);
   const { newCheckIn, postId, checkInId } = (result.rows as { newCheckIn: boolean; postId: number | null; checkInId: number | null }[])[0];
-  if (postId) notifyActivity(user, "gym", postId, true);
+  if (postId) {
+    notifyActivity(user, "gym", postId, true);
+    adilbotReactsToGym(
+      postId,
+      { username: user.username, notes: notes || null, lifts: parsed.lifts.map((l) => ({ name: EXERCISES[l.exercise as Exercise] ?? l.exercise, kg: toKg(l.weight), reps: l.reps, bodyweight: isBodyweight(l.exercise) })) },
+      photoB64 ? Buffer.from(photoB64, "base64") : null,
+    );
+  }
   else if (newCheckIn && checkInId) notifyActivity(user, "gym", checkInId);
 
   refreshActivityPages();

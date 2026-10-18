@@ -29,7 +29,7 @@ test("notification payloads use local destinations and omit health values and pr
   assert.notEqual(activityMessage("friend", "gym", 42).tag, activityMessage("friend", "gym", 42, true).tag);
   assert.equal(activityMessage("friend", "gym", 42, true).url, "/gym#gym-post-42");
   assert.equal(activityMessage("friend", "gym", 42).url, "/gym#h-gym-week");
-  assert.equal(activityMessage("friend", "meals", 42).url, "/meals#meal-42");
+  assert.equal(activityMessage("friend", "meals", 42).url, "/posts#meal-42");
   assert.equal(activityMessage("friend", "steps", 42).url, "/gym#h-steps");
   assert.equal(activityMessage("friend", "weight", 42).url, "/#h-weight");
 });
@@ -69,7 +69,7 @@ test("the service worker displays push payloads and opens only this app", async 
   runInNewContext(await readFile(new URL("../../public/sw.js", import.meta.url), "utf8"), { self, URL });
   let task: Promise<unknown> = Promise.resolve();
   handlers.push({ data: { json: () => activityMessage("friend", "meals", 12) }, waitUntil: (p: Promise<unknown>) => { task = p; } });
-  await task; assert.equal(shown[0].body, "friend shared a meal."); assert.equal(shown[0].data.url, "https://site.example/meals#meal-12");
+  await task; assert.equal(shown[0].body, "friend shared a meal."); assert.equal(shown[0].data.url, "https://site.example/posts#meal-12");
   handlers.notificationclick({ notification: { data: { url: "https://attacker.example/" }, close() {} }, waitUntil: (p: Promise<unknown>) => { task = p; } });
   await task; assert.deepEqual(navigated, ["https://site.example/"]); assert.equal(focused, true);
 });

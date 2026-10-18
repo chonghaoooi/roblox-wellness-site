@@ -31,7 +31,7 @@ export const pushRequestSchema = z.discriminatedUnion("action", [
 
 export function activityMessage(username: string, kind: ActivityKind, id: number, isGymPost = false, brand = "+1lean"): PushMessage {
   const content = {
-    meals: { body: `${username} shared a meal.`, url: `/meals#meal-${id}` },
+    meals: { body: `${username} shared a meal.`, url: `/posts#meal-${id}` },
     gym: { body: isGymPost ? `${username} shared a workout, lifts or gym notes.` : `${username} checked in at the gym.`, url: isGymPost ? `/gym#gym-post-${id}` : "/gym#h-gym-week" },
     steps: { body: `${username} logged their steps.`, url: "/gym#h-steps" },
     weight: { body: `${username} added a weigh-in or height update.`, url: "/#h-weight" },

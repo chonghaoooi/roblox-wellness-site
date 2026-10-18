@@ -6,7 +6,7 @@ import { IconGym, IconHome, IconMeals, IconTrends } from "./icons";
 
 const destinations = [
   { href: "/", label: "Home", Icon: IconHome },
-  { href: "/meals", label: "Meals", Icon: IconMeals },
+  { href: "/posts", label: "Posts", Icon: IconMeals },
   { href: "/gym", label: "Gym", Icon: IconGym },
   { href: "/trends", label: "Trends", Icon: IconTrends },
 ] as const;

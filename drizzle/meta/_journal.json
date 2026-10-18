@@ -127,6 +127,13 @@
       "when": 1792305220153,
       "tag": "0017_zero_calorie_meals",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792322190016,
+      "tag": "0018_flowery_pestilence",
+      "breakpoints": true
     }
   ]
 }

@@ -22,7 +22,7 @@ export function DailyLeaderboards({ boards }: { boards: Record<Metric, ReactNode
     function followHash() {
       const hash = window.location.hash;
       // Existing shared links and queued notifications should still find their content.
-      if (hash === "#meal-gallery" || hash.startsWith("#meal-")) router.replace(`/meals${hash}`);
+      if (hash === "#meal-gallery" || hash.startsWith("#meal-")) router.replace(`/posts${hash}`);
       else if (hash === "#h-steps") router.replace("/gym#h-steps"); // Steps moved to the Gym + Steps page
       else if (hash === "#gym-blog" || hash.startsWith("#gym-post-") || hash.startsWith("#h-gym-")) router.replace(`/gym${hash}`);
       else {

@@ -12,6 +12,7 @@ import { userAverages, userEntries, userGymWeeks, userGymStreak, userLifts } fro
 import { createSession, destroySession, getSettings, getUser } from "@/lib/auth";
 import { addDays, todayStr } from "@/lib/dates";
 import { isBodyweight, parseLiftRows } from "@/lib/lifts";
+import { adilbotReacts } from "@/lib/adilbot";
 import { notifyActivity, removeCurrentPushDevice } from "@/lib/push";
 import { type FormState, loginSchema, manualStepsSchema, mealSchema, settingsSchema, signupSchema, toFieldErrors, weighInSchema } from "@/lib/validation";
 
@@ -179,6 +180,7 @@ export async function addMeal(_: FormState, fd: FormData): Promise<FormState> {
   const [log] = await db.insert(logs).values({ userId: user.id, date, kind: "meal", calories, source, note }).returning({ id: logs.id });
   const [meal] = await db.insert(meals).values({ userId: user.id, logId: log.id, caption: note, dataB64: photo.buf.toString("base64") }).returning({ id: meals.id });
   notifyActivity(user, "meals", meal.id);
+  adilbotReacts(meal.id, photo.buf, { username: user.username, calories: calories!, caption: note });
   refreshActivityPages();
   return { ok: true, message: `Added ${calories.toLocaleString("en-US")} kcal${source === "ai" ? " (AI estimate)" : ""}` };
 }

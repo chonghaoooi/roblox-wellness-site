@@ -81,6 +81,23 @@ export async function estimateMeal(jpeg: Buffer): Promise<MealGuess> {
   return { calories: cal, description: String(r.description ?? "").slice(0, 80) };
 }
 
+export type MealReaction = { vote: "up" | "down"; comment: string };
+
+/** adil bot's take on a freshly posted meal: a thumbs up or down plus one short, friendly comment. */
+export async function reactToMeal(jpeg: Buffer, ctx: { username: string; calories: number; caption: string | null }): Promise<MealReaction> {
+  const r = (await askAboutImage(
+    jpeg,
+    `You are "adil bot", a casual texting-style bot (not the real Adil) reacting to a meal photo a friend just posted in a fitness app for friends. ` +
+      `Poster: ${ctx.username}. Calories: ${ctx.calories} kcal. Caption: ${JSON.stringify(ctx.caption ?? "")}. ` +
+      `Vote "up" for a balanced, tasty-looking or reasonable meal, "down" for something very junky, huge, or clearly a poor choice for fitness; be generous, mostly up. ` +
+      `The comment is ONE short lowercase message under 110 characters, playful and specific to what is on the plate. Light roasting of the FOOD is fine; never mention anyone's body, weight or looks, never shame, no skull emoji, no hashtags. ` +
+      'JSON: {"vote": "up" or "down", "comment": string}.',
+  )) as { vote?: string; comment?: string };
+  const comment = String(r.comment ?? "").replace(/\s+/g, " ").trim().slice(0, 140);
+  if (!comment) throw new Error("no comment");
+  return { vote: r.vote === "down" ? "down" : "up", comment };
+}
+
 /** Read today's step total off a screenshot of a phone step counter / health app. */
 export async function readSteps(jpeg: Buffer): Promise<number> {
   const r = (await askAboutImage(

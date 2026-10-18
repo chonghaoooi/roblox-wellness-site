@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import sharp from "sharp";
 
-const appUrl = "https://2026-10-17-this-website-is-called-t.vercel.app";
+const appUrl = "https://your-site.example";
 const policy = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Step privacy</title></head><body><h1>Roblox step privacy</h1><p>This optional companion requests read-only Steps access. Only your daily total, date, source and sync time go to the site. Your username and step total are public on leaderboards. Raw samples and other health data stay on your phone. No health data is sold or used for advertising.</p><p>Turn off sync on the tracker page and revoke permission in your health settings to stop future reads. Delete existing counters in Recent logs.</p><p><a href="${appUrl}/health-privacy">Full step-data privacy details</a></p></body></html>`;
 await writeFile("native/www/privacypolicy.html", policy);
 const androidRoot = "native/android/app/src/main";

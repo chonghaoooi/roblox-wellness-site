@@ -15,7 +15,7 @@ const hash = await bcrypt.hash(password, 12);
 const output = join(homedir(), "Downloads", "roblox-site-admin-login.txt");
 await mkdir(join(homedir(), "Downloads"), { recursive: true });
 // Create the credential file exclusively, so an existing credential note cannot be overwritten.
-await writeFile(output, `THE ROBLOX SITE — admin login\n\nURL: https://2026-10-17-this-website-is-called-t.vercel.app/admin\nUsername: ${username}\nPassword: ${password}\n\nChange your password under Admin → Password. Keep these details private.\n`, { flag: "wx", mode: 0o600 });
+await writeFile(output, `THE ROBLOX SITE — admin login\n\nURL: https://your-site.example/admin\nUsername: ${username}\nPassword: ${password}\n\nChange your password under Admin → Password. Keep these details private.\n`, { flag: "wx", mode: 0o600 });
 try {
   await sql`insert into admins (username,password_hash) values (${username},${hash})`;
 } catch (error) {

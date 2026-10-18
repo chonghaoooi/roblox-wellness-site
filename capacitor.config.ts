@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   appName: "Roblox",
   webDir: "native/www",
   server: {
-    url: "https://2026-10-17-this-website-is-called-t.vercel.app/trackers",
+    url: "https://your-site.example/trackers",
     cleartext: false,
   },
   android: { path: "native/android", backgroundColor: "#000000", allowMixedContent: false },

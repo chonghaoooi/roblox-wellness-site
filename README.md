@@ -7,7 +7,6 @@
 <p align="center">Log your food. Get your steps in. Share your workout. Bring your friends.</p>
 
 <p align="center">
-  <a href="https://2026-10-17-this-website-is-called-t.vercel.app/">Open the app</a> ·
   <a href="#how-to-use-the-app">How to use it</a> ·
   <a href="#run-it-yourself">Run it yourself</a> ·
   <a href="native/README.md">iPhone &amp; Android companion</a> ·

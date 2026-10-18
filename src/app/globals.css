@@ -8,6 +8,14 @@
   height: 148px;
   padding: 8px;
 }
+/* Same 148px footprint as a meal card; the middle row (lifts and notes) scrolls instead of overflowing. */
+.gym-card-details {
+  display: grid;
+  grid-template-rows: 28px minmax(0, 1fr) 24px 28px;
+  gap: 3px;
+  height: 148px;
+  padding: 8px;
+}
 .meal-comment-preview {
   display: flex;
   align-items: center;

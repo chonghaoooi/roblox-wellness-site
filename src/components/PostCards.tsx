@@ -15,7 +15,7 @@ export function MealCard({ m, me }: { m: Meal; me?: string }) {
   return (
     <li id={`meal-${m.id}`} className="meal-card panel scroll-mt-36 overflow-hidden !rounded-xl">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/api/meals/${m.id}`} alt={m.caption ? `${m.username}'s meal: ${m.caption}` : `Meal by ${m.username}`} loading="lazy" className="aspect-square w-full border-b-4 border-black object-cover" />
+                <img src={`/api/meals/${m.id}?w=480&v=${m.photoV}`} alt={m.caption ? `${m.username}'s meal: ${m.caption}` : `Meal by ${m.username}`} loading="lazy" decoding="async" className="aspect-square w-full border-b-4 border-black bg-black/40 object-cover" />
                 <div className="meal-card-details">
                   <div className="flex items-center gap-2">
                     <Avatar name={m.username} size={28} />
@@ -66,7 +66,7 @@ export function GymCard({ post, me, weightUnit, wide = "", compact }: { post: Gy
                   </div>
                   {post.hasPhoto && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`/api/gym/${post.id}`} alt={`Workout shared by ${post.username}`} loading="lazy" className="max-h-96 w-full bg-black/40 object-contain" />
+                    <img src={`/api/gym/${post.id}`} alt={`Workout shared by ${post.username}`} loading="lazy" decoding="async" className="max-h-96 w-full bg-black/40 object-contain" />
                   )}
                   <div className="space-y-4 p-4">
                     {!post.hasPhoto && !post.notes && post.lifts.length === 0 && <p className="text-sm">This workout photo is no longer available.</p>}
@@ -106,14 +106,14 @@ function GymCardCompact({ post, me, weightUnit }: { post: GymPost; me?: string; 
     <li id={`gym-post-${post.id}`} className="meal-card panel scroll-mt-36 overflow-hidden !rounded-xl">
       {post.hasPhoto ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={`/api/gym/${post.id}`} alt={`Workout shared by ${post.username}`} loading="lazy" className="aspect-square w-full border-b-4 border-black bg-black/40 object-cover" />
+        <img src={`/api/gym/${post.id}?w=480`} alt={`Workout shared by ${post.username}`} loading="lazy" decoding="async" className="aspect-square w-full border-b-4 border-black bg-black/40 object-cover" />
       ) : (
         <div className="aspect-square w-full overflow-y-auto border-b-4 border-black bg-black/30 p-3">
           <p className="mb-1 font-display text-sm text-sun">WORKOUT</p>
           {post.notes ? <p className="whitespace-pre-wrap break-words text-sm leading-snug">{post.notes}</p> : post.lifts.length === 0 && <p className="text-sm">Checked in at the gym.</p>}
         </div>
       )}
-      <div className="meal-card-details">
+      <div className="gym-card-details">
         <div className="flex items-center gap-2">
           <Avatar name={post.username} size={28} />
           <span className="min-w-0 flex-1 truncate font-display text-base">{post.username}</span>
@@ -124,14 +124,16 @@ function GymCardCompact({ post, me, weightUnit }: { post: GymPost; me?: string; 
             </form>
           )}
         </div>
-        {post.lifts.length > 0 && (
-          <ul className="max-h-[4.5rem] space-y-0.5 overflow-y-auto pr-1 text-xs leading-4" aria-label="Lifts in this workout">
-            {post.lifts.map((lift, i) => (
-              <li key={i} className="flex justify-between gap-2"><span className="min-w-0 truncate font-semibold">{EXERCISES[lift.exercise as Exercise] ?? lift.exercise}</span><span className="neon shrink-0">{liftText(lift, weightUnit)}</span></li>
-            ))}
-          </ul>
-        )}
-        {post.hasPhoto && post.notes && <p className="line-clamp-2 break-words text-xs font-semibold" title={post.notes}>{post.notes}</p>}
+        <div className="min-h-0 space-y-0.5 overflow-y-auto pr-1 text-xs leading-4">
+          {post.lifts.length > 0 && (
+            <ul aria-label="Lifts in this workout">
+              {post.lifts.map((lift, i) => (
+                <li key={i} className="flex justify-between gap-2"><span className="min-w-0 truncate font-semibold">{EXERCISES[lift.exercise as Exercise] ?? lift.exercise}</span><span className="neon shrink-0">{liftText(lift, weightUnit)}</span></li>
+              ))}
+            </ul>
+          )}
+          {post.hasPhoto && post.notes && <p className="break-words font-semibold">{post.notes}</p>}
+        </div>
         <div className="flex items-center justify-between gap-1">
           <time className="min-w-0 truncate text-[10px] leading-6 text-white/75" dateTime={post.createdAt} title={when(post.createdAt)}>{when(post.createdAt)}</time>
           <MealVotes kind="gym" mealId={post.id} upVotes={post.upVotes} downVotes={post.downVotes} myVote={post.myVote} loggedIn={Boolean(me)} />

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ProfileTrigger } from "./ProfileCard";
 
-export function Avatar({ name, size = 44 }: { name: string; size?: number }) {
+export function Avatar({ name, size = 44, plain }: { name: string; size?: number; plain?: boolean }) {
   let h = 0;
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360;
-  return (
+  const face = (
     <span
       aria-hidden
       className="relative inline-grid shrink-0 place-items-center overflow-hidden rounded-lg border-[3px] border-black font-display text-white"
@@ -23,6 +24,7 @@ export function Avatar({ name, size = 44 }: { name: string; size?: number }) {
       <img src={`/api/avatar/${encodeURIComponent(name)}`} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
     </span>
   );
+  return plain ? face : <ProfileTrigger name={name}>{face}</ProfileTrigger>;
 }
 
 export function LinkButton({ href, color, icon, children }: { href: string; color: "green" | "purple" | "blue" | "yellow" | "red"; icon?: ReactNode; children: ReactNode }) {

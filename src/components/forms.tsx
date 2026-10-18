@@ -1,5 +1,7 @@
 "use client";
 
+import { PhotoInput } from "./PhotoInput";
+
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { addWorkout, addMeal, addSteps, addWeighIn, deleteLog, login, saveSettings, signup } from "@/app/actions";
@@ -98,7 +100,7 @@ export function MealForm({ today, aiOn, compact }: { today: string; aiOn: boolea
         <>
           <div className="min-w-48 flex-1">
             <label htmlFor="photo-m" className="label">Meal photo</label>
-            <input id="photo-m" name="photo" type="file" accept="image/*" required className="field mt-1 !text-base" onChange={(e) => setPicked(Boolean(e.target.files?.length))} />
+            <PhotoInput id="photo-m" required onPicked={setPicked} />
           </div>
           <div className="w-36">
             <label htmlFor="calories-m" className="label">Calories {aiOn && <span className="text-sm">(or AI)</span>}</label>
@@ -115,7 +117,11 @@ export function MealForm({ today, aiOn, compact }: { today: string; aiOn: boolea
         </>
       ) : (
         <Shell title="Add a meal" as="h2" state={s}>
-          <Field id="photo-meal" name="photo" label="Meal photo" type="file" accept="image/*" required onChange={(e) => setPicked(Boolean(e.target.files?.length))} hint={aiOn ? "The AI estimates the calories from your photo." : undefined} />
+          <div>
+            <label htmlFor="photo-meal" className="label">Meal photo</label>
+            <PhotoInput id="photo-meal" required onPicked={setPicked} />
+            {aiOn && <p className="mt-1 text-sm">The AI estimates the calories from your photo.</p>}
+          </div>
           <Field id="calories-meal" name="calories" label={aiOn ? "Calories (optional, overrides the AI)" : "Calories"} type="number" inputMode="numeric" min={0} max={5000} required={!aiOn} err={fe.calories} />
           <Field id="caption-meal" name="caption" label="Caption (optional)" maxLength={80} />
           <button className="btn btn-green w-full" disabled={pending || !picked}><IconPlus />{pending ? (aiOn ? "Analysing…" : "Saving…") : "Add meal"}</button>
@@ -228,7 +234,11 @@ export function WorkoutForm({ today, done, weightUnit }: { today: string; done: 
             <textarea id="gym-notes" name="notes" className="field mt-1 min-h-32" rows={5} maxLength={1500} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Today's workout, a new personal best, how it felt..." aria-invalid={s.fieldErrors?.notes ? true : undefined} />
             <p className="mt-1 text-sm">{notes.length}/1500</p>
           </div>
-          <Field id="gym-photo" name="photo" label="Workout photo (optional)" type="file" accept="image/*" hint="Photos are public and stay in the blog until you or an admin remove them." />
+          <div>
+            <label htmlFor="gym-photo" className="label">Workout photo (optional)</label>
+            <PhotoInput id="gym-photo" />
+            <p className="mt-1 text-sm">Photos are public and stay in the blog until you or an admin remove them.</p>
+          </div>
           <p className="text-sm">Notes, photos and lifts are shared publicly. Posting also checks you in once for today. All fields can be blank for a check-in.</p>
         </fieldset>
         <button className="btn btn-green w-full" disabled={pending}><IconSave />{pending ? "Saving workout..." : "Save workout / check in"}</button>

@@ -1,5 +1,7 @@
 "use client";
 
+import { PhotoInput } from "./PhotoInput";
+
 import { useActionState, useRef, useState, type ReactNode } from "react";
 import { buyAvatarSwap, buyMakeover, buyMealSwap, buyTicker, orderSpecial, removeMyAvatar, restoreMyAvatar, setMyAvatar } from "@/app/shop/actions";
 import { shrink, shrinkSquare } from "@/lib/shrink";
@@ -90,7 +92,7 @@ export function AvatarSwapBuy({ people, disabled }: { people: ShopTarget[]; disa
         {people.map((p) => <option key={p.id} value={p.id}>{p.username}</option>)}
       </select>
       <label htmlFor="swap-photo" className="label !text-base">New picture</label>
-      <input id="swap-photo" name="photo" type="file" accept="image/*" className={`${fieldCls} !text-sm`} required disabled={disabled} />
+      <PhotoInput id="swap-photo" className={`${fieldCls} !text-sm`} required disabled={disabled} />
       <PriceButton item="avatar" pending={pending} disabled={disabled || people.length === 0} label="Swap picture" />
       <Result state={state} />
     </form>
@@ -108,7 +110,7 @@ export function MealSwapBuy({ meals, disabled }: { meals: ShopMeal[]; disabled: 
         {meals.map((m) => <option key={m.id} value={m.id}>{m.username} · {m.caption ? m.caption.slice(0, 28) : "meal"} · {when(m.createdAt)}</option>)}
       </select>
       <label htmlFor="meal-photo" className="label !text-base">New photo</label>
-      <input id="meal-photo" name="photo" type="file" accept="image/*" className={`${fieldCls} !text-sm`} required disabled={disabled} />
+      <PhotoInput id="meal-photo" className={`${fieldCls} !text-sm`} required disabled={disabled} />
       <PriceButton item="meal" pending={pending} disabled={disabled || meals.length === 0} label="Swap photo" />
       <Result state={state} />
     </form>
@@ -160,7 +162,7 @@ export function AvatarSettings({ hasOwn, swappedBy }: { hasOwn: boolean; swapped
       )}
       <form ref={formRef} action={run} className="space-y-2">
         <label htmlFor="my-avatar" className="label !text-base">{hasOwn ? "Replace your picture" : "Add a picture"} (free)</label>
-        <input id="my-avatar" name="photo" type="file" accept="image/*" className={`${fieldCls} !text-sm`} required />
+        <PhotoInput id="my-avatar" className={`${fieldCls} !text-sm`} required front />
         <div className="flex flex-wrap gap-2">
           <button className="btn btn-green !min-h-11" disabled={pending}>{pending ? "Checking…" : "Save picture"}</button>
           {hasOwn && <button type="button" className="btn btn-red !min-h-11" disabled={busy} onClick={async () => { setBusy(true); await removeMyAvatar(); setBusy(false); }}>Remove</button>}

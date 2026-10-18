@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireDb } from "@/db";
+import { adilbotReplies } from "@/lib/adilbot";
 import { getUser } from "@/lib/auth";
 import { mealCommentInput } from "@/lib/meal-comments";
 
@@ -47,6 +48,7 @@ export async function POST(request: Request, { params }: Context) {
     returning id, text, created_at::text as "createdAt"`);
   if (!result.rows.length) return reply({ error: "This meal was removed, or you've reached 30 comments this hour. Try again later." }, 409);
   revalidatePath("/posts");
+  adilbotReplies("meal", Number(id), user.username);
   return reply({ comment: { ...result.rows[0], username: user.username, mine: true } }, 201);
 }
 

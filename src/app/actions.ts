@@ -71,7 +71,6 @@ export async function saveSettings(_: FormState, fd: FormData): Promise<FormStat
 }
 
 const MAX_PHOTO_BYTES = 800_000;
-const MAX_MEALS_PER_DAY = 8;
 const MAX_AI_PER_DAY = 25;
 
 const isJpeg = (b: Buffer) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
@@ -160,8 +159,6 @@ export async function addMeal(_: FormState, fd: FormData): Promise<FormState> {
   const photo = await readPhoto(fd);
   if ("error" in photo) return { error: photo.error };
   const db = requireDb();
-  const res = await db.execute(sql`select count(*)::int as n from meals where user_id = ${user.id} and created_at > now() - interval '1 day'`);
-  if ((res.rows as { n: number }[])[0].n >= MAX_MEALS_PER_DAY) return { error: `Max ${MAX_MEALS_PER_DAY} meals per day` };
   let calories = typed;
   let source = "manual";
   let note = caption ?? null;

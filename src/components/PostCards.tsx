@@ -82,7 +82,7 @@ export function GymCard({ post, me, weightUnit, wide = "", compact }: { post: Gy
                       })}
                     </ul>}
                   </div>
-                  <div className="meal-card-details border-t-2 border-black">
+                  <div className="flex flex-col gap-1 border-t-2 border-black p-2">
                     <div className="flex items-center justify-between gap-1">
                       <time className="min-w-0 truncate text-[10px] leading-6 text-white/75" dateTime={post.createdAt} title={when(post.createdAt)}>{when(post.createdAt)}</time>
                       <MealVotes kind="gym" mealId={post.id} upVotes={post.upVotes} downVotes={post.downVotes} myVote={post.myVote} loggedIn={Boolean(me)} />

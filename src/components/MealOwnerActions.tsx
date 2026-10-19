@@ -2,14 +2,22 @@
 
 import { useActionState, useEffect, useState } from "react";
 import type { FormState } from "@/lib/validation";
+import { shrink } from "@/lib/shrink";
 import { IconTrash } from "./icons";
 
-type Props = { deleteAction: () => Promise<void>; editAction: (s: FormState, fd: FormData) => Promise<FormState>; caption: string | null; calories: number | null; protein: number | null };
+type Props = { mealId: number; photoCount: number; photoV: number; deleteAction: () => Promise<void>; editAction: (s: FormState, fd: FormData) => Promise<FormState>; caption: string | null; calories: number | null; protein: number | null };
 
 /** Edit and delete for your own post. Lives in the opened post, not on the card. */
-export function MealOwnerActions({ deleteAction, editAction, caption, calories, protein }: Props) {
+export function MealOwnerActions({ mealId, photoCount, photoV, deleteAction, editAction, caption, calories, protein }: Props) {
   const [editing, setEditing] = useState(false);
-  const [s, run, pending] = useActionState(editAction, {});
+  const [s, run, pending] = useActionState(async (prev: FormState, fd: FormData): Promise<FormState> => {
+    for (const key of ["replace0", "replace1", "replace2", "add1", "add2"]) {
+      const f = fd.get(key);
+      if (!(f instanceof File) || f.size === 0) continue;
+      try { fd.set(key, await shrink(f, 1000, 0.8)); } catch { return { error: "Couldn't read that image. Try a JPEG or PNG." }; }
+    }
+    return editAction(prev, fd);
+  }, {});
   useEffect(() => { if (s.ok) setEditing(false); }, [s]);
   const fe = s.fieldErrors ?? {};
   const icon = "inline-flex size-9 items-center justify-center rounded-md bg-white/10 text-white/80";
@@ -25,6 +33,19 @@ export function MealOwnerActions({ deleteAction, editAction, caption, calories, 
       </div>
       {editing && (
         <form action={run} className="basis-full space-y-2 rounded-lg bg-white/5 p-3">
+          <p className="label">Photos (pick a file to change one or add one)</p>
+          <div className="space-y-2">
+            {Array.from({ length: photoCount }, (_, k) => (
+              <div key={k} className="flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/api/meals/${mealId}?${k ? `i=${k}&` : ""}w=240&v=${photoV}`} alt="" className="size-12 shrink-0 rounded-md border-2 border-black object-cover" />
+                <label className="min-w-0 flex-1 text-xs">Change photo {k + 1}<input name={`replace${k}`} type="file" accept="image/*" className="field mt-0.5 !min-h-0 !py-1 !text-sm" /></label>
+              </div>
+            ))}
+            {Array.from({ length: 3 - photoCount }, (_, k) => (
+              <label key={k} className="block text-xs">Add photo {photoCount + k + 1}<input name={`add${k + 1}`} type="file" accept="image/*" className="field mt-0.5 !min-h-0 !py-1 !text-sm" /></label>
+            ))}
+          </div>
           <label className="label" htmlFor="edit-caption">Caption</label>
           <input id="edit-caption" name="caption" maxLength={80} defaultValue={caption ?? ""} className="field" aria-invalid={fe.caption ? true : undefined} />
           <div className="flex gap-2">

@@ -54,7 +54,7 @@ function MealExpanded({ m, me }: { m: Meal; me?: string }) {
         <Avatar name={m.username} size={32} />
         <span className="min-w-0 flex-1 truncate font-display text-lg">{m.username}</span>
         <time className="shrink-0 text-xs text-white/75" dateTime={m.createdAt}>{when(m.createdAt)}</time>
-        {m.username === me && <MealOwnerActions deleteAction={deleteMeal.bind(null, m.id)} editAction={editMeal.bind(null, m.id)} caption={m.caption} calories={m.calories} protein={m.protein} />}
+        {m.username === me && <MealOwnerActions mealId={m.id} photoCount={m.photoCount} photoV={m.photoV} deleteAction={deleteMeal.bind(null, m.id)} editAction={editMeal.bind(null, m.id)} caption={m.caption} calories={m.calories} protein={m.protein} />}
       </div>
       <p className="neon flex flex-wrap items-center gap-x-2 text-lg">
         {m.calories !== null && <span>{m.calories.toLocaleString("en-US")} kcal</span>}

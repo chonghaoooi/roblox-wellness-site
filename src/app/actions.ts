@@ -385,7 +385,27 @@ export async function editMeal(id: number, _: FormState, fd: FormData): Promise<
   const db = requireDb();
   const [m] = await db.select({ logId: meals.logId, calories: logs.calories }).from(meals).leftJoin(logs, eq(logs.id, meals.logId)).where(and(eq(meals.id, id), eq(meals.userId, user.id)));
   if (!m) return { error: "Post not found." };
+  // Photos: replace0..2 swap an existing photo, add1/add2 append new ones (3 max). Any change busts the image cache.
+  const have = 1 + (await db.select({ p: mealPhotos.position }).from(mealPhotos).where(eq(mealPhotos.mealId, id))).length;
+  const picked: { slot: number; buf: Buffer }[] = [];
+  let next = have;
+  for (const key of ["replace0", "replace1", "replace2", "add1", "add2"]) {
+    const f = fd.get(key);
+    if (!(f instanceof File) || f.size === 0) continue;
+    const slot = key.startsWith("replace") ? Number(key.slice(7)) : next++;
+    if (slot >= have && key.startsWith("replace")) continue;
+    if (slot > 2) continue;
+    const r = await readPhoto(fd, key);
+    if ("error" in r) return { error: r.error };
+    picked.push({ slot, buf: r.buf });
+  }
   await db.update(meals).set({ caption: caption ?? null }).where(eq(meals.id, id));
+  for (const { slot, buf } of picked) {
+    const b64 = buf.toString("base64");
+    if (slot === 0) await db.update(meals).set({ dataB64: b64 }).where(eq(meals.id, id));
+    else await db.insert(mealPhotos).values({ mealId: id, position: slot, dataB64: b64 }).onConflictDoUpdate({ target: [mealPhotos.mealId, mealPhotos.position], set: { dataB64: b64 } });
+  }
+  if (picked.length) await db.update(meals).set({ originalB64: null, editedBy: null, editedAt: new Date() }).where(eq(meals.id, id));
   if (m.logId) {
     const changed = calories !== undefined && calories !== m.calories;
     await db.update(logs).set({ note: caption ?? null, proteinG: protein ?? null, ...(calories !== undefined ? { calories } : {}), ...(changed ? { source: "manual" } : {}) }).where(and(eq(logs.id, m.logId), eq(logs.userId, user.id)));

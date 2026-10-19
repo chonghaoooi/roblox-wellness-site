@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import { COMMENT_LIMIT, type MealComment } from "@/lib/meal-comments";
 
 type Props = { mealId: number; owner: string; caption: string | null; count: number; text: string | null; author: string | null; loggedIn: boolean; kind?: "meal" | "gym" };
@@ -10,6 +10,7 @@ type Props = { mealId: number; owner: string; caption: string | null; count: num
 export function MealComments({ mealId, owner, caption, count: initialCount, text, author, loggedIn, kind = "meal" }: Props) {
   const noun = kind === "gym" ? "workout" : "meal";
   const dialog = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   const router = useRouter();
   const [comments, setComments] = useState<MealComment[]>([]);
   const [next, setNext] = useState<number | null>(null);
@@ -61,9 +62,9 @@ export function MealComments({ mealId, owner, caption, count: initialCount, text
       <span className="min-w-0 flex-1 truncate text-left">{text ? <><b className="text-white">{author}</b> <span>{text}</span></> : "Add a comment…"}</span>
       <span className="flex shrink-0 items-center gap-0.5 text-white/80"><span>{initialCount || ""}</span><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="m6 9 6 6 6-6" /></svg></span>
     </button>
-    <dialog ref={dialog} className="meal-comments-dialog" aria-labelledby={`comments-title-${kind}-${mealId}`}>
+    <dialog ref={dialog} className="meal-comments-dialog" aria-labelledby={titleId}>
       <div className="flex items-center justify-between gap-3 border-b border-white/20 pb-3">
-        <div className="min-w-0"><h2 id={`comments-title-${kind}-${mealId}`} className="font-display text-xl">Comments</h2><p className="text-xs text-neon">{owner}&apos;s {noun}</p></div>
+        <div className="min-w-0"><h2 id={titleId} className="font-display text-xl">Comments</h2><p className="text-xs text-neon">{owner}&apos;s {noun}</p></div>
         <button type="button" autoFocus onClick={() => dialog.current?.close()} className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white/10 text-xl" aria-label="Close comments">×</button>
       </div>
       {caption && <p className="my-3 text-sm font-semibold break-words">{caption}</p>}

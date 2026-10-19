@@ -290,13 +290,14 @@ export async function hasEntryOn(userId: number, date: string): Promise<boolean>
   return r.length > 0;
 }
 
-export type Meal = { id: number; username: string; caption: string | null; calories: number | null; protein: number | null; source: string | null; createdAt: string; upVotes: number; downVotes: number; myVote: number; swappedBy: string | null; photoV: number; commentCount: number; commentText: string | null; commentAuthor: string | null };
+export type Meal = { id: number; username: string; caption: string | null; calories: number | null; protein: number | null; source: string | null; createdAt: string; upVotes: number; downVotes: number; myVote: number; swappedBy: string | null; photoV: number; photoCount: number; commentCount: number; commentText: string | null; commentAuthor: string | null };
 
 /** Latest retained meals, newest first. Image bytes are served by /api/meals/[id]. */
 export async function recentMeals(viewerId?: number): Promise<Meal[]> {
   return rows<Meal>(sql`
     select m.id, u.username, m.caption, l.calories, l.protein_g as protein, l.source, m.created_at::text as "createdAt",
       v.up as "upVotes", v.down as "downVotes", v.mine as "myVote", eu.username as "swappedBy", coalesce(extract(epoch from m.edited_at)::bigint, 0)::float8 as "photoV",
+      1 + (select count(*)::int from meal_photos mp where mp.meal_id = m.id) as "photoCount",
       coalesce(c.total, 0)::int as "commentCount", c.text as "commentText", c.username as "commentAuthor"
     from meals m join users u on u.id = m.user_id left join logs l on l.id = m.log_id
     left join users eu on eu.id = m.edited_by and m.original_b64 is not null

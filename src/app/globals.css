@@ -479,3 +479,23 @@ html[data-typing="true"] body:has(.log-page) .log-quick-nav { transform: transla
   transform: rotate(-3deg);
   color: #ffe34d;
 }
+
+/* Meal photo sets: native horizontal swipe, no scrollbar. */
+.photo-strip { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.photo-strip::-webkit-scrollbar { display: none; }
+.photo-strip > img { scroll-snap-align: center; scroll-snap-stop: always; }
+.meal-post-dialog {
+  width: min(28rem, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 0;
+  overflow-y: auto;
+  border: 3px solid #000;
+  border-radius: 16px;
+  background: #101316;
+  color: #fff;
+  box-shadow: 0 12px 48px rgb(0 0 0 / 0.6);
+}
+.meal-post-dialog::backdrop { background: rgb(0 0 0 / 0.7); }
+.meal-zoom-dialog { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: #000; color: #fff; }
+.meal-zoom-dialog::backdrop { background: #000; }

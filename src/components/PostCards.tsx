@@ -4,6 +4,7 @@ import { kgToLb } from "@/lib/calc";
 import { EXERCISES, isBodyweight, type Exercise } from "@/lib/lifts";
 import type { GymPost, Meal } from "@/lib/queries";
 import { IconTrash } from "./icons";
+import { MealCardShell } from "./MealCardShell";
 import { MealComments } from "./MealComments";
 import { MealVotes } from "./MealVotes";
 import { Avatar, fmt } from "./ui";
@@ -13,9 +14,7 @@ const when = (iso: string) =>
 
 export function MealCard({ m, me }: { m: Meal; me?: string }) {
   return (
-    <li id={`meal-${m.id}`} className="meal-card panel scroll-mt-36 overflow-hidden !rounded-xl">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/api/meals/${m.id}?w=480&v=${m.photoV}`} alt={m.caption ? `${m.username}'s meal: ${m.caption}` : `Meal by ${m.username}`} loading="lazy" decoding="async" className="aspect-square w-full border-b-4 border-black bg-black/40 object-cover" />
+    <MealCardShell id={m.id} count={m.photoCount} v={m.photoV} alt={m.caption ? `${m.username}'s meal: ${m.caption}` : `Meal by ${m.username}`} expanded={<MealExpanded m={m} me={me} />}>
                 <div className="meal-card-details">
                   <div className="flex items-center gap-2">
                     <Avatar name={m.username} size={28} />
@@ -47,7 +46,29 @@ export function MealCard({ m, me }: { m: Meal; me?: string }) {
                   </div>
                   <MealComments mealId={m.id} owner={m.username} caption={m.caption} count={m.commentCount} text={m.commentText} author={m.commentAuthor} loggedIn={Boolean(me)} />
                 </div>
-    </li>
+    </MealCardShell>
+  );
+}
+
+/** The full post shown when a meal card is opened: nothing truncated, plus votes and comments. */
+function MealExpanded({ m, me }: { m: Meal; me?: string }) {
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        <Avatar name={m.username} size={32} />
+        <span className="min-w-0 flex-1 truncate font-display text-lg">{m.username}</span>
+        <time className="shrink-0 text-xs text-white/75" dateTime={m.createdAt}>{when(m.createdAt)}</time>
+      </div>
+      <p className="neon flex flex-wrap items-center gap-x-2 text-lg">
+        {m.calories !== null && <span>{m.calories.toLocaleString("en-US")} kcal</span>}
+        {m.protein ? <span className="font-body text-sm text-white/85">{m.protein}g PRO</span> : null}
+        {m.source === "ai" && <span className="rounded border-2 border-black bg-sun px-1 font-body text-[0.7rem] font-extrabold leading-4 text-black" title="Estimated by AI from the photo">AI</span>}
+        {m.swappedBy && <span className="rounded bg-[#7028d4] px-1 font-body text-[10px] leading-5 text-white">Swapped by {m.swappedBy}</span>}
+      </p>
+      {m.caption && <p className="break-words text-base font-semibold">{m.caption}</p>}
+      <MealVotes mealId={m.id} upVotes={m.upVotes} downVotes={m.downVotes} myVote={m.myVote} loggedIn={Boolean(me)} />
+      <MealComments mealId={m.id} owner={m.username} caption={m.caption} count={m.commentCount} text={m.commentText} author={m.commentAuthor} loggedIn={Boolean(me)} />
+    </>
   );
 }
 

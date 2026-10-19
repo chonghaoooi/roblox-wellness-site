@@ -152,6 +152,17 @@ export const meals = pgTable(
   (t) => [index("meals_created_idx").on(t.createdAt), index("meals_user_idx").on(t.userId)],
 );
 
+/** Extra photos (positions 1 and 2) of a meal post; photo 0 stays in meals.data_b64. */
+export const mealPhotos = pgTable(
+  "meal_photos",
+  {
+    mealId: integer("meal_id").notNull().references(() => meals.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    dataB64: text("data_b64").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.mealId, t.position] }), check("meal_photos_position_check", sql`${t.position} in (1, 2)`)],
+);
+
 export const mealVotes = pgTable(
   "meal_votes",
   {

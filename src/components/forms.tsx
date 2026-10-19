@@ -73,10 +73,11 @@ function useLocalDate(fallback: string) {
 function usePhotoAction(action: (s: FormState, fd: FormData) => Promise<FormState>, maxSide: number, quality: number) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, run, pending] = useActionState(async (prev: FormState, fd: FormData): Promise<FormState> => {
-    const f = fd.get("photo");
-    if (f instanceof File && f.size > 0) {
+    for (const key of ["photo", "photo2", "photo3"]) {
+      const f = fd.get(key);
+      if (!(f instanceof File) || f.size === 0) continue;
       try {
-        fd.set("photo", await shrink(f, maxSide, quality));
+        fd.set(key, await shrink(f, maxSide, quality));
       } catch {
         return { error: "Couldn't read that image. Try a JPEG or PNG." };
       }
@@ -86,6 +87,22 @@ function usePhotoAction(action: (s: FormState, fd: FormData) => Promise<FormStat
     return r;
   }, init);
   return { formRef, state, run, pending };
+}
+
+/** Optional 2nd and 3rd meal photos; the post becomes a swipeable set. */
+function MoreMealPhotos({ idPrefix }: { idPrefix: string }) {
+  const [n, setN] = useState(0);
+  return (
+    <div className="mt-2 space-y-2">
+      {[2, 3].slice(0, n).map((k) => (
+        <div key={k}>
+          <label htmlFor={`photo${k}-${idPrefix}`} className="label">Photo {k} (optional)</label>
+          <input id={`photo${k}-${idPrefix}`} name={`photo${k}`} type="file" accept="image/*" className="field mt-1 !text-base" />
+        </div>
+      ))}
+      {n < 2 && <button type="button" className="btn btn-blue w-full" onClick={() => setN(n + 1)}>+ Add another photo ({n + 1}/3)</button>}
+    </div>
+  );
 }
 
 export function MealForm({ today, aiOn, compact }: { today: string; aiOn: boolean; compact?: boolean }) {
@@ -101,6 +118,7 @@ export function MealForm({ today, aiOn, compact }: { today: string; aiOn: boolea
           <div className="min-w-48 flex-1">
             <label htmlFor="photo-m" className="label">Meal photo</label>
             <PhotoInput id="photo-m" required onPicked={setPicked} />
+            <MoreMealPhotos idPrefix="m" />
           </div>
           <div className="w-36">
             <label htmlFor="calories-m" className="label">Calories {aiOn && <span className="text-sm">(or AI)</span>}</label>
@@ -124,6 +142,7 @@ export function MealForm({ today, aiOn, compact }: { today: string; aiOn: boolea
           <div>
             <label htmlFor="photo-meal" className="label">Meal photo</label>
             <PhotoInput id="photo-meal" required onPicked={setPicked} />
+            <MoreMealPhotos idPrefix="meal" />
             {aiOn && <p className="mt-1 text-sm">The AI estimates the calories from your photo.</p>}
           </div>
           <Field id="calories-meal" name="calories" label={aiOn ? "Calories (optional, overrides the AI)" : "Calories"} type="number" inputMode="numeric" min={0} max={5000} required={!aiOn} err={fe.calories} />

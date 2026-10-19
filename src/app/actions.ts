@@ -5,7 +5,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireDb } from "@/db";
-import { aiCalls, coachMessages, gymPosts, logs, meals, settings, users } from "@/db/schema";
+import { aiCalls, coachMessages, gymPosts, logs, mealPhotos, meals, settings, users } from "@/db/schema";
 import { type ChatMsg, aiEnabled, chat, estimateMeal, readSteps } from "@/lib/ai";
 import { COACH_SYSTEM, formatCoachContext } from "@/lib/coach";
 import { userAverages, userEntries, userGymWeeks, userGymStreak, userLifts } from "@/lib/queries";
@@ -78,8 +78,8 @@ const isJpeg = (b: Buffer) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
 const bad = (field: string, msg: string): FormState => ({ error: msg, fieldErrors: { [field]: msg } });
 
 /** Photos are re-encoded as JPEG by the browser; anything else is rejected (no SVG/HTML smuggling). */
-async function readPhoto(fd: FormData): Promise<{ buf: Buffer } | { error: string }> {
-  const file = fd.get("photo");
+async function readPhoto(fd: FormData, key = "photo"): Promise<{ buf: Buffer } | { error: string }> {
+  const file = fd.get(key);
   if (!(file instanceof File) || file.size === 0) return { error: "Pick a photo first" };
   if (file.size > MAX_PHOTO_BYTES) return { error: "Photo is too big. Try a smaller one." };
   const buf = Buffer.from(await file.arrayBuffer());
@@ -160,6 +160,15 @@ export async function addMeal(_: FormState, fd: FormData): Promise<FormState> {
   if (!dateOk(date, 1)) return bad("date", "Meals can only be logged for today");
   const photo = await readPhoto(fd);
   if ("error" in photo) return { error: photo.error };
+  // Up to two more photos (photo2, photo3) make a swipeable set; blank slots are skipped.
+  const extras: Buffer[] = [];
+  for (const key of ["photo2", "photo3"]) {
+    const f = fd.get(key);
+    if (!(f instanceof File) || f.size === 0) continue;
+    const more = await readPhoto(fd, key);
+    if ("error" in more) return { error: more.error };
+    extras.push(more.buf);
+  }
   const db = requireDb();
   let calories = typed;
   let protein: number | null = null;
@@ -180,6 +189,7 @@ export async function addMeal(_: FormState, fd: FormData): Promise<FormState> {
   }
   const [log] = await db.insert(logs).values({ userId: user.id, date, kind: "meal", calories, proteinG: typedProtein ?? protein, source, note }).returning({ id: logs.id });
   const [meal] = await db.insert(meals).values({ userId: user.id, logId: log.id, caption: note, dataB64: photo.buf.toString("base64") }).returning({ id: meals.id });
+  if (extras.length) await db.insert(mealPhotos).values(extras.map((b, i) => ({ mealId: meal.id, position: i + 1, dataB64: b.toString("base64") })));
   notifyActivity(user, "meals", meal.id);
   adilbotReacts(meal.id, photo.buf, { username: user.username, calories: calories!, caption: note });
   refreshActivityPages();

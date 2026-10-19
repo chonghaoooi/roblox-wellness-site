@@ -26,7 +26,27 @@ export function PostCardShell({ kind = "meals", domId, id, count, v, alt, top, e
       className="meal-card panel scroll-mt-36 cursor-pointer overflow-hidden !rounded-xl"
       onClick={(e) => { if (!(e.target as HTMLElement).closest("button, a, form, input, textarea, dialog")) openPost(); }}
     >
-      {count > 0 ? <PhotoCarousel kind={kind} id={id} count={count} v={v} alt={alt} w={480} auto onOpen={openPost} className="aspect-square w-full border-b-4 border-black bg-black/40" /> : top}
+      {kind === "meals" && count > 1 ? (
+        <button
+          type="button"
+          onClick={openPost}
+          aria-label={`Open post: ${alt} (${count} photos)`}
+          className={`grid aspect-square w-full grid-cols-2 gap-1 overflow-hidden border-b-4 border-black bg-black/40 p-0 focus-visible:outline-4 focus-visible:-outline-offset-4 focus-visible:outline-white ${count === 3 ? "grid-rows-2" : "grid-rows-1"}`}
+        >
+          {Array.from({ length: count }, (_, n) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={n}
+              src={`/api/meals/${id}?${n ? `i=${n}&` : ""}w=480&v=${v}`}
+              alt={`${alt} (photo ${n + 1} of ${count})`}
+              loading={n === 0 ? "eager" : "lazy"}
+              decoding="async"
+              draggable={false}
+              className={`h-full min-h-0 w-full min-w-0 object-cover ${count === 3 && n === 0 ? "row-span-2" : ""}`}
+            />
+          ))}
+        </button>
+      ) : count > 0 ? <PhotoCarousel kind={kind} id={id} count={count} v={v} alt={alt} w={480} auto onOpen={openPost} className="aspect-square w-full border-b-4 border-black bg-black/40" /> : top}
       {children}
       {open && (
         <dialog ref={post} className="meal-post-dialog" aria-label="Post" onClose={() => setOpen(false)} onClick={backdropClose}>

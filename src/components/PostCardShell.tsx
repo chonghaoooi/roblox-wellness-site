@@ -7,7 +7,7 @@ import { PhotoCarousel } from "./PhotoCarousel";
  * Post card frame (meals and workouts). Tapping the card opens the full post (photo reset to the first, plus the details in `expanded`);
  * tapping the photo there opens it full-screen. Buttons, forms and links inside the card keep their own behaviour.
  */
-export function PostCardShell({ kind = "meals", domId, id, count, v, alt, top, expanded, children }: { kind?: "meals" | "gym"; domId: string; id: number; count: number; v: number; alt: string; top?: ReactNode; expanded: ReactNode; children: ReactNode }) {
+export function PostCardShell({ kind = "meals", domId, id, count, v, alt, top, heading, photoClassName = "aspect-square", contain, className = "", expanded, children }: { kind?: "meals" | "gym"; domId: string; id: number; count: number; v: number; alt: string; top?: ReactNode; heading?: ReactNode; photoClassName?: string; contain?: boolean; className?: string; expanded: ReactNode; children: ReactNode }) {
   const post = useRef<HTMLDialogElement>(null);
   const big = useRef<HTMLDialogElement>(null);
   const at = useRef(0);
@@ -23,21 +23,22 @@ export function PostCardShell({ kind = "meals", domId, id, count, v, alt, top, e
   return (
     <li
       id={domId}
-      className="meal-card panel scroll-mt-36 cursor-pointer overflow-hidden !rounded-xl"
+      className={`meal-card panel scroll-mt-36 cursor-pointer overflow-hidden !rounded-xl ${className}`}
       onClick={(e) => { if (!(e.target as HTMLElement).closest("button, a, form, input, textarea, dialog")) openPost(); }}
     >
-      {kind === "meals" && count > 1 ? (
+      {heading}
+      {count > 1 ? (
         <button
           type="button"
           onClick={openPost}
           aria-label={`Open post: ${alt} (${count} photos)`}
-          className={`grid aspect-square w-full grid-cols-2 gap-1 overflow-hidden border-b-4 border-black bg-black/40 p-0 focus-visible:outline-4 focus-visible:-outline-offset-4 focus-visible:outline-white ${count === 3 ? "grid-rows-2" : "grid-rows-1"}`}
+          className={`grid ${photoClassName} w-full grid-cols-2 gap-1 overflow-hidden border-b-4 border-black bg-black/40 p-0 focus-visible:outline-4 focus-visible:-outline-offset-4 focus-visible:outline-white ${count === 3 ? "grid-rows-2" : "grid-rows-1"}`}
         >
           {Array.from({ length: count }, (_, n) => (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={n}
-              src={`/api/meals/${id}?${n ? `i=${n}&` : ""}w=480&v=${v}`}
+              src={`/api/${kind}/${id}?${n ? `i=${n}&` : ""}w=480&v=${v}`}
               alt={`${alt} (photo ${n + 1} of ${count})`}
               loading={n === 0 ? "eager" : "lazy"}
               decoding="async"
@@ -46,7 +47,7 @@ export function PostCardShell({ kind = "meals", domId, id, count, v, alt, top, e
             />
           ))}
         </button>
-      ) : count > 0 ? <PhotoCarousel kind={kind} id={id} count={count} v={v} alt={alt} w={480} auto onOpen={openPost} className="aspect-square w-full border-b-4 border-black bg-black/40" /> : top}
+      ) : count > 0 ? <PhotoCarousel kind={kind} id={id} count={count} v={v} alt={alt} w={480} contain={contain} onOpen={openPost} className={`${photoClassName} w-full border-b-4 border-black bg-black/40`} /> : top}
       {children}
       {open && (
         <dialog ref={post} className="meal-post-dialog" aria-label="Post" onClose={() => setOpen(false)} onClick={backdropClose}>

@@ -6,7 +6,6 @@ import type { GymPost, Meal, StepPost, WeighInPost } from "@/lib/queries";
 import { IconTrash } from "./icons";
 import { PostCardShell } from "./PostCardShell";
 import { PostOwnerActions } from "./PostOwnerActions";
-import { PhotoCarousel } from "./PhotoCarousel";
 import { MealComments } from "./MealComments";
 import { MealVotes } from "./MealVotes";
 import { Avatar, fmt } from "./ui";
@@ -74,8 +73,7 @@ function MealExpanded({ m, me }: { m: Meal; me?: string }) {
 export function GymCard({ post, me, weightUnit, wide = "", compact }: { post: GymPost; me?: string; weightUnit: "kg" | "lb"; wide?: string; compact?: boolean }) {
   if (compact) return <GymCardCompact post={post} me={me} weightUnit={weightUnit} />;
   return (
-    <li id={`gym-post-${post.id}`} className={`min-w-0 scroll-mt-36 ${wide}`}>
-                <article className="panel overflow-hidden !rounded-xl" aria-label={`Workout by ${post.username} on ${post.date}`}>
+    <PostCardShell kind="gym" domId={`gym-post-${post.id}`} id={post.id} count={post.photoCount} v={post.photoV} alt={`Workout shared by ${post.username}`} photoClassName="h-96" contain className={`min-w-0 ${wide}`} expanded={<GymExpanded post={post} me={me} weightUnit={weightUnit} />} heading={
                   <div className="flex items-center gap-3 border-b-2 border-black p-4">
                     <Avatar name={post.username} size={36} />
                     <div className="min-w-0 flex-1">
@@ -84,9 +82,7 @@ export function GymCard({ post, me, weightUnit, wide = "", compact }: { post: Gy
                     </div>
                     {post.username === me && <form action={deletePost.bind(null, post.id)}><button className="btn btn-red !min-h-10 !px-3 !py-1" aria-label={`Delete your workout post from ${post.date}`}><IconTrash /></button></form>}
                   </div>
-                  {post.hasPhoto && (
-                    <PhotoCarousel kind="gym" id={post.id} count={post.photoCount} v={post.photoV} alt={`Workout shared by ${post.username}`} contain auto className="h-96 w-full bg-black/40" />
-                  )}
+    }>
                   <div className="space-y-4 p-4">
                     {!post.hasPhoto && !post.notes && post.lifts.length === 0 && <p className="text-sm">This workout photo is no longer available.</p>}
                     {post.notes && <p className="whitespace-pre-wrap break-words text-base leading-relaxed">{post.notes}</p>}
@@ -108,8 +104,7 @@ export function GymCard({ post, me, weightUnit, wide = "", compact }: { post: Gy
                     </div>
                     <MealComments kind="gym" mealId={post.id} owner={post.username} caption={post.notes} count={post.commentCount} text={post.commentText} author={post.commentAuthor} loggedIn={Boolean(me)} />
                   </div>
-                </article>
-    </li>
+    </PostCardShell>
   );
 }
 

@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { useId, useRef, useState, type FormEvent } from "react";
 import { COMMENT_LIMIT, type MealComment } from "@/lib/meal-comments";
 
-type Props = { mealId: number; owner: string; caption: string | null; count: number; text: string | null; author: string | null; loggedIn: boolean; kind?: "meal" | "gym" };
+type Props = { mealId: number; owner: string; caption: string | null; count: number; text: string | null; author: string | null; loggedIn: boolean; kind?: "meal" | "gym" | "log" };
 
 export function MealComments({ mealId, owner, caption, count: initialCount, text, author, loggedIn, kind = "meal" }: Props) {
-  const noun = kind === "gym" ? "workout" : "meal";
+  const noun = kind === "gym" ? "workout" : kind === "log" ? "post" : "meal";
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const router = useRouter();
@@ -19,7 +19,7 @@ export function MealComments({ mealId, owner, caption, count: initialCount, text
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const endpoint = `/api/${kind === "gym" ? "gym" : "meals"}/${mealId}/comments`;
+  const endpoint = `/api/${kind === "gym" ? "gym" : kind === "log" ? "logs" : "meals"}/${mealId}/comments`;
 
   async function load(before?: number) {
     setLoading(true); setError("");

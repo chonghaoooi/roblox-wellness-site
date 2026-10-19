@@ -8,7 +8,7 @@ import { meals, mealVotes } from "@/db/schema";
 import { getUser } from "@/lib/auth";
 import type { FormState } from "@/lib/validation";
 
-const input = z.object({ mealId: z.coerce.number().int().positive().max(2147483647), vote: z.enum(["up", "down", "clear"]), kind: z.enum(["meal", "gym"]).default("meal") });
+const input = z.object({ mealId: z.coerce.number().int().positive().max(2147483647), vote: z.enum(["up", "down", "clear"]), kind: z.enum(["meal", "gym", "log"]).default("meal") });
 
 export async function voteMeal(_: FormState, fd: FormData): Promise<FormState> {
   const user = await getUser();
@@ -17,6 +17,7 @@ export async function voteMeal(_: FormState, fd: FormData): Promise<FormState> {
   if (!parsed.success) return { error: "Choose a valid meal and vote." };
   const { mealId, vote, kind } = parsed.data;
   if (kind === "gym") return voteGymPost(user.id, mealId, vote);
+  if (kind === "log") return voteLog(user.id, mealId, vote);
   const db = requireDb();
   if (vote === "clear") {
     const [meal] = await db.select({ id: meals.id }).from(meals).where(eq(meals.id, mealId)).limit(1);
@@ -30,6 +31,26 @@ export async function voteMeal(_: FormState, fd: FormData): Promise<FormState> {
       returning meal_id
     `);
     if (!result.rows.length) return { error: "This meal is no longer available." };
+  }
+  revalidatePath("/posts");
+  return { ok: true, message: vote === "clear" ? "Vote removed." : "Vote saved." };
+}
+
+async function voteLog(userId: number, logId: number, vote: "up" | "down" | "clear"): Promise<FormState> {
+  const db = requireDb();
+  if (vote === "clear") {
+    const removed = await db.execute(sql`delete from log_votes where log_id = ${logId} and user_id = ${userId} returning log_id`);
+    if (!removed.rows.length) {
+      const exists = await db.execute(sql`select id from logs where id = ${logId}`);
+      if (!exists.rows.length) return { error: "This post is no longer available." };
+    }
+  } else {
+    const result = await db.execute(sql`
+      insert into log_votes (log_id, user_id, value)
+      select id, ${userId}, ${vote === "up" ? 1 : -1} from logs where id = ${logId} and kind in ('steps', 'weight')
+      on conflict (log_id, user_id) do update set value = excluded.value
+      returning log_id`);
+    if (!result.rows.length) return { error: "This post is no longer available." };
   }
   revalidatePath("/posts");
   return { ok: true, message: vote === "clear" ? "Vote removed." : "Vote saved." };

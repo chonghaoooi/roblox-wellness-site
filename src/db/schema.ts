@@ -211,6 +211,25 @@ export const gymPostComments = pgTable("gym_post_comments", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index("gym_post_comments_post_idx").on(t.postId, t.id), index("gym_post_comments_user_idx").on(t.userId, t.createdAt)]);
 
+/** Votes and comments on step and weigh-in cards; they hang off the log row itself. */
+export const logVotes = pgTable(
+  "log_votes",
+  {
+    logId: integer("log_id").notNull().references(() => logs.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    value: integer("value").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.logId, t.userId] }), index("log_votes_user_idx").on(t.userId), check("log_votes_value_check", sql`${t.value} in (-1, 1)`)],
+);
+
+export const logComments = pgTable("log_comments", {
+  id: serial("id").primaryKey(),
+  logId: integer("log_id").notNull().references(() => logs.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index("log_comments_log_idx").on(t.logId, t.id), index("log_comments_user_idx").on(t.userId, t.createdAt)]);
+
 export const coachMessages = pgTable(
   "coach_messages",
   {

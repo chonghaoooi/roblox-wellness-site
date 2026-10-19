@@ -1,8 +1,8 @@
 import { deleteMeal, deletePost, editMeal, editWorkout } from "@/app/actions";
 import { restoreMealPhoto } from "@/app/shop/actions";
-import { kgToLb } from "@/lib/calc";
+import { bmi as calcBmi, kgToLb } from "@/lib/calc";
 import { EXERCISES, isBodyweight, type Exercise } from "@/lib/lifts";
-import type { GymPost, Meal, StepPost } from "@/lib/queries";
+import type { GymPost, Meal, StepPost, WeighInPost } from "@/lib/queries";
 import { IconTrash } from "./icons";
 import { PostCardShell } from "./PostCardShell";
 import { PostOwnerActions } from "./PostOwnerActions";
@@ -181,23 +181,61 @@ function GymExpanded({ post, me, weightUnit }: { post: GymPost; me?: string; wei
   );
 }
 
-/** A day's step count, same footprint as the other cards. */
-export function StepCard({ s }: { s: StepPost }) {
+/** Step and weigh-in cards: same footprint as the gym card, with votes and comments on the log row. */
+function LogCardFrame({ id, username, tag, top, line, createdAt, me, votes, comments }: {
+  id: number; username: string; tag: string; top: React.ReactNode; line: React.ReactNode; createdAt: string; me?: string;
+  votes: { up: number; down: number; mine: number }; comments: { count: number; text: string | null; author: string | null };
+}) {
   return (
-    <li className="meal-card panel overflow-hidden !rounded-xl">
-      <div className="flex aspect-square w-full flex-col items-center justify-center gap-1 border-b-4 border-black bg-black/30 p-3 text-center">
+    <li id={`log-${id}`} className="meal-card panel scroll-mt-36 overflow-hidden !rounded-xl">
+      <div className="flex aspect-square w-full flex-col items-center justify-center gap-1 border-b-4 border-black bg-black/30 p-3 text-center">{top}</div>
+      <div className="gym-card-details">
+        <div className="flex items-center gap-2">
+          <Avatar name={username} size={28} />
+          <span className="min-w-0 flex-1 truncate font-display text-base">{username}</span>
+          <span className="shrink-0 rounded bg-[#7028d4] px-1 text-[10px] leading-5">{tag}</span>
+        </div>
+        <div className="min-h-0 overflow-hidden text-xs leading-4">{line}</div>
+        <div className="flex min-w-0 items-center justify-between gap-1">
+          <time className="min-w-0 truncate text-[10px] leading-6 text-white/75" dateTime={createdAt} title={when(createdAt)}>{when(createdAt)}</time>
+          <MealVotes kind="log" mealId={id} upVotes={votes.up} downVotes={votes.down} myVote={votes.mine} loggedIn={Boolean(me)} />
+        </div>
+        <MealComments kind="log" mealId={id} owner={username} caption={null} count={comments.count} text={comments.text} author={comments.author} loggedIn={Boolean(me)} />
+      </div>
+    </li>
+  );
+}
+
+/** A day's step count. */
+export function StepCard({ s, me }: { s: StepPost; me?: string }) {
+  return (
+    <LogCardFrame id={s.id} username={s.username} tag="STEPS" me={me} createdAt={s.createdAt}
+      votes={{ up: s.upVotes, down: s.downVotes, mine: s.myVote }} comments={{ count: s.commentCount, text: s.commentText, author: s.commentAuthor }}
+      top={<>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/assets/sneaker.svg" alt="" width={56} height={56} className="size-14" />
         <p className="neon font-display text-4xl leading-none">{s.steps.toLocaleString("en-US")}</p>
         <p className="font-display text-sm text-sun">STEPS</p>
-      </div>
-      <div className="flex min-w-0 flex-col gap-1 p-2">
-        <div className="flex items-center gap-2">
-          <Avatar name={s.username} size={28} />
-          <span className="min-w-0 flex-1 truncate font-display text-base">{s.username}</span>
-        </div>
-        <time className="truncate text-[10px] leading-6 text-white/75" dateTime={s.createdAt} title={when(s.createdAt)}>{when(s.createdAt)}</time>
-      </div>
-    </li>
+      </>}
+      line={<p className="font-semibold">{s.steps.toLocaleString("en-US")} steps logged</p>} />
+  );
+}
+
+/** A weigh-in: weight in the viewer's unit, change since the previous weigh-in, and BMI when height is known. */
+export function WeighInCard({ w, me, weightUnit }: { w: WeighInPost; me?: string; weightUnit: "kg" | "lb" }) {
+  const show = (kg: number) => fmt(weightUnit === "lb" ? kgToLb(kg) : kg, 1);
+  const delta = w.prevKg === null ? null : (weightUnit === "lb" ? kgToLb(w.weightKg) - kgToLb(w.prevKg) : w.weightKg - w.prevKg);
+  const change = delta === null ? "First weigh-in" : Math.abs(delta) < 0.05 ? "No change" : `${delta < 0 ? "▼" : "▲"} ${fmt(Math.abs(delta), 1)} ${weightUnit}`;
+  const bmi = w.heightCm ? calcBmi(w.weightKg, w.heightCm) : null;
+  return (
+    <LogCardFrame id={w.id} username={w.username} tag="WEIGH-IN" me={me} createdAt={w.createdAt}
+      votes={{ up: w.upVotes, down: w.downVotes, mine: w.myVote }} comments={{ count: w.commentCount, text: w.commentText, author: w.commentAuthor }}
+      top={<>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/assets/scale.svg" alt="" width={56} height={56} className="size-14" />
+        <p className="neon font-display text-4xl leading-none">{show(w.weightKg)} <span className="text-xl">{weightUnit}</span></p>
+        <p className="font-display text-sm text-sun">{change}</p>
+      </>}
+      line={<p className="font-semibold">{bmi === null ? change : `BMI ${fmt(bmi, 1)} · ${change}`}</p>} />
   );
 }

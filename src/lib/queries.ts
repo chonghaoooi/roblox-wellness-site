@@ -316,15 +316,48 @@ export async function recentMeals(viewerId?: number): Promise<Meal[]> {
 
 // ---------- Steps ----------
 
-export type StepPost = { id: number; username: string; steps: number; source: string | null; createdAt: string };
+type Social = { upVotes: number; downVotes: number; myVote: number; commentCount: number; commentText: string | null; commentAuthor: string | null };
+export type StepPost = Social & { id: number; username: string; steps: number; source: string | null; createdAt: string };
+export type WeighInPost = Social & { id: number; username: string; weightKg: number; prevKg: number | null; heightCm: number | null; createdAt: string };
+
+/** Votes and latest comment for step and weigh-in cards (both are rows of `logs`). */
+const logSocial = (viewerId?: number) => sql`
+  v.up as "upVotes", v.down as "downVotes", v.mine as "myVote",
+  coalesce(c.total, 0)::int as "commentCount", c.text as "commentText", c.username as "commentAuthor"`;
+const logSocialJoins = (viewerId?: number) => sql`
+  left join lateral (
+    select (count(*) filter (where value=1))::int as up, (count(*) filter (where value=-1))::int as down,
+      coalesce(max(value) filter (where user_id=${viewerId ?? 0}), 0)::int as mine
+    from log_votes where log_id = x.id
+  ) v on true
+  left join lateral (
+    select c.text, cu.username, count(*) over () as total
+    from log_comments c join users cu on cu.id = c.user_id where c.log_id = x.id order by c.id desc limit 1
+  ) c on true`;
 
 /** Each person's highest step count per day over the last 3 days, as feed cards. */
-export async function recentSteps(today: string): Promise<StepPost[]> {
+export async function recentSteps(today: string, viewerId?: number): Promise<StepPost[]> {
   return rows<StepPost>(sql`
-    select distinct on (l.user_id, l.date) l.id, u.username, l.steps::int as steps, l.source, l.created_at::text as "createdAt"
-    from logs l join users u on u.id = l.user_id
-    where l.kind = 'steps' and l.steps > 0 and l.date >= ${addDays(today, -2)}::date
-    order by l.user_id, l.date, l.steps desc, l.id desc`);
+    select x.id, x.username, x.steps, x.source, x."createdAt", ${logSocial(viewerId)}
+    from (
+      select distinct on (l.user_id, l.date) l.id, u.username, l.steps::int as steps, l.source, l.created_at::text as "createdAt"
+      from logs l join users u on u.id = l.user_id
+      where l.kind = 'steps' and l.steps > 0 and l.date >= ${addDays(today, -2)}::date
+      order by l.user_id, l.date, l.steps desc, l.id desc
+    ) x ${logSocialJoins(viewerId)}`);
+}
+
+/** Each person's latest weigh-in per day over the last 3 days, with their previous weight for the change. */
+export async function recentWeighIns(today: string, viewerId?: number): Promise<WeighInPost[]> {
+  return rows<WeighInPost>(sql`
+    select x.id, x.username, x."weightKg", x."prevKg", x."heightCm", x."createdAt", ${logSocial(viewerId)}
+    from (
+      select distinct on (l.user_id, l.date) l.id, u.username, l.weight_kg::float8 as "weightKg", l.height_cm::float8 as "heightCm", l.created_at::text as "createdAt",
+        (select p.weight_kg::float8 from logs p where p.user_id = l.user_id and p.weight_kg is not null and (p.date, p.id) < (l.date, l.id) order by p.date desc, p.id desc limit 1) as "prevKg"
+      from logs l join users u on u.id = l.user_id
+      where l.kind = 'weight' and l.weight_kg is not null and l.date >= ${addDays(today, -2)}::date
+      order by l.user_id, l.date, l.id desc
+    ) x ${logSocialJoins(viewerId)}`);
 }
 
 // ---------- Gym ----------

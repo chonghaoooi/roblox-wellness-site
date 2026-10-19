@@ -317,7 +317,7 @@ export async function recentMeals(viewerId?: number): Promise<Meal[]> {
 // ---------- Steps ----------
 
 type Social = { upVotes: number; downVotes: number; myVote: number; commentCount: number; commentText: string | null; commentAuthor: string | null };
-export type StepPost = Social & { id: number; username: string; steps: number; source: string | null; createdAt: string };
+export type StepPost = Social & { id: number; username: string; steps: number; source: string | null; createdAt: string; bgId: number | null };
 export type WeighInPost = Social & { id: number; username: string; weightKg: number; prevKg: number | null; heightCm: number | null; createdAt: string };
 
 /** Votes and latest comment for step and weigh-in cards (both are rows of `logs`). */
@@ -338,9 +338,10 @@ const logSocialJoins = (viewerId?: number) => sql`
 /** Each person's highest step count per day over the last 3 days, as feed cards. */
 export async function recentSteps(today: string, viewerId?: number): Promise<StepPost[]> {
   return rows<StepPost>(sql`
-    select x.id, x.username, x.steps, x.source, x."createdAt", ${logSocial(viewerId)}
+    select x.id, x.username, x.steps, x.source, x."createdAt", x."bgId", ${logSocial(viewerId)}
     from (
-      select distinct on (l.user_id, l.date) l.id, u.username, l.steps::int as steps, l.source, l.created_at::text as "createdAt"
+      select distinct on (l.user_id, l.date) l.id, u.username, l.steps::int as steps, l.source, l.created_at::text as "createdAt",
+        (select b.log_id from log_backgrounds b join logs bl on bl.id = b.log_id where bl.user_id = l.user_id and bl.date = l.date order by b.log_id desc limit 1) as "bgId"
       from logs l join users u on u.id = l.user_id
       where l.kind = 'steps' and l.steps > 0 and l.date >= ${addDays(today, -2)}::date
       order by l.user_id, l.date, l.steps desc, l.id desc

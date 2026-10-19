@@ -73,11 +73,11 @@ function useLocalDate(fallback: string) {
 function usePhotoAction(action: (s: FormState, fd: FormData) => Promise<FormState>, maxSide: number, quality: number) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, run, pending] = useActionState(async (prev: FormState, fd: FormData): Promise<FormState> => {
-    for (const key of ["photo", "photo2", "photo3"]) {
+    for (const key of ["photo", "photo2", "photo3", "background"]) {
       const f = fd.get(key);
       if (!(f instanceof File) || f.size === 0) continue;
       try {
-        fd.set(key, await shrink(f, maxSide, quality));
+        fd.set(key, key === "background" ? await shrink(f, 900, 0.8) : await shrink(f, maxSide, quality));
       } catch {
         return { error: "Couldn't read that image. Try a JPEG or PNG." };
       }
@@ -169,6 +169,7 @@ export function StepsForm({ today, aiOn }: { today: string; aiOn: boolean }) {
         ) : (
           <Field name="steps" label="Steps today" type="number" inputMode="numeric" min={0} max={100000} required err={s.fieldErrors?.steps} hint="Screenshot verification isn't switched on yet, so typed steps are accepted for now." />
         )}
+        <Field id="background-steps" name="background" label="Background photo (optional)" type="file" accept="image/*" err={s.fieldErrors?.background} hint="Shown behind your steps on the Posts page. Leave it empty to get a sunrise, sunset or night scene." />
         <button className="btn btn-blue w-full" disabled={pending || (aiOn && !picked)}><IconSave />{pending ? "Reading…" : "Log steps"}</button>
       </Shell>
     </form>

@@ -188,15 +188,15 @@ function scene(iso: string) {
 }
 
 /** Step and weigh-in cards: same footprint as the gym card, with votes and comments on the log row. */
-function LogCardFrame({ id, username, top, line, createdAt, me, votes, comments }: {
-  id: number; username: string; top: React.ReactNode; line: React.ReactNode; createdAt: string; me?: string;
+function LogCardFrame({ id, username, bg, top, line, createdAt, me, votes, comments }: {
+  id: number; username: string; bg?: string; top: React.ReactNode; line: React.ReactNode; createdAt: string; me?: string;
   votes: { up: number; down: number; mine: number }; comments: { count: number; text: string | null; author: string | null };
 }) {
   return (
     <li id={`log-${id}`} className="meal-card panel scroll-mt-36 overflow-hidden !rounded-xl">
       <div className="relative aspect-square w-full overflow-hidden border-b-4 border-black bg-black/30">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/assets/scenes/${scene(createdAt)}.svg`} alt="" aria-hidden="true" className="absolute inset-0 size-full object-cover" />
+        <img src={bg ?? `/assets/scenes/${scene(createdAt)}.svg`} alt="" aria-hidden="true" className="absolute inset-0 size-full object-cover" />
         {top}
       </div>
       <div className="gym-card-details">
@@ -218,7 +218,7 @@ function LogCardFrame({ id, username, top, line, createdAt, me, votes, comments 
 /** A day's step count. */
 export function StepCard({ s, me }: { s: StepPost; me?: string }) {
   return (
-    <LogCardFrame id={s.id} username={s.username} me={me} createdAt={s.createdAt}
+    <LogCardFrame id={s.id} username={s.username} bg={s.bgId ? `/api/logs/${s.bgId}/background?w=480` : undefined} me={me} createdAt={s.createdAt}
       votes={{ up: s.upVotes, down: s.downVotes, mine: s.myVote }} comments={{ count: s.commentCount, text: s.commentText, author: s.commentAuthor }}
       top={<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2.5 pt-8 text-left [text-shadow:0_1px_3px_rgb(0_0_0/0.7)]">
         <p className="neon font-display text-2xl leading-none">{s.steps.toLocaleString("en-US")}</p>

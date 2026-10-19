@@ -5,7 +5,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireDb } from "@/db";
-import { aiCalls, coachMessages, gymPostPhotos, gymPosts, logs, mealPhotos, meals, settings, users } from "@/db/schema";
+import { aiCalls, coachMessages, gymPostPhotos, gymPosts, logBackgrounds, logs, mealPhotos, meals, settings, users } from "@/db/schema";
 import { type ChatMsg, aiEnabled, chat, estimateMeal, readSteps } from "@/lib/ai";
 import { COACH_SYSTEM, formatCoachContext } from "@/lib/coach";
 import { userAverages, userEntries, userGymWeeks, userGymStreak, userLifts } from "@/lib/queries";
@@ -126,6 +126,13 @@ export async function addSteps(_: FormState, fd: FormData): Promise<FormState> {
   if (!user) redirect("/login");
   const date = String(fd.get("date") ?? "");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !dateOk(date, 1)) return bad("date", "Steps can only be logged for today");
+  let background: Buffer | null = null;
+  const bg = fd.get("background");
+  if (bg instanceof File && bg.size > 0) {
+    const r = await readPhoto(fd, "background");
+    if ("error" in r) return { error: r.error };
+    background = r.buf;
+  }
   let steps: number;
   let source = "ai";
   if (aiEnabled) {
@@ -145,6 +152,7 @@ export async function addSteps(_: FormState, fd: FormData): Promise<FormState> {
     source = "manual";
   }
   const [entry] = await requireDb().insert(logs).values({ userId: user.id, date, kind: "steps", steps, source }).returning({ id: logs.id });
+  if (background) await requireDb().insert(logBackgrounds).values({ logId: entry.id, dataB64: background.toString("base64") });
   notifyActivity(user, "steps", entry.id);
   refreshActivityPages();
   return { ok: true, message: `Logged ${steps.toLocaleString("en-US")} steps` };

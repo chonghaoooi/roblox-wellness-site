@@ -162,6 +162,13 @@
       "when": 1792419937218,
       "tag": "0022_dashing_sphinx",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792420530542,
+      "tag": "0023_nostalgic_silk_fever",
+      "breakpoints": true
     }
   ]
 }

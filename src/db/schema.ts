@@ -222,6 +222,12 @@ export const logVotes = pgTable(
   (t) => [primaryKey({ columns: [t.logId, t.userId] }), index("log_votes_user_idx").on(t.userId), check("log_votes_value_check", sql`${t.value} in (-1, 1)`)],
 );
 
+/** Optional custom background for a steps card, chosen when logging steps. */
+export const logBackgrounds = pgTable("log_backgrounds", {
+  logId: integer("log_id").primaryKey().references(() => logs.id, { onDelete: "cascade" }),
+  dataB64: text("data_b64").notNull(),
+});
+
 export const logComments = pgTable("log_comments", {
   id: serial("id").primaryKey(),
   logId: integer("log_id").notNull().references(() => logs.id, { onDelete: "cascade" }),

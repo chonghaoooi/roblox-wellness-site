@@ -156,7 +156,7 @@ export async function addMeal(_: FormState, fd: FormData): Promise<FormState> {
   if (!user) redirect("/login");
   const parsed = mealSchema.safeParse(obj(fd));
   if (!parsed.success) return toFieldErrors(parsed.error);
-  const { date, calories: typed, caption } = parsed.data;
+  const { date, calories: typed, protein: typedProtein, caption } = parsed.data;
   if (!dateOk(date, 1)) return bad("date", "Meals can only be logged for today");
   const photo = await readPhoto(fd);
   if ("error" in photo) return { error: photo.error };
@@ -178,7 +178,7 @@ export async function addMeal(_: FormState, fd: FormData): Promise<FormState> {
       return { error: `${e instanceof Error ? e.message : "AI failed."} You can type the calories instead.` };
     }
   }
-  const [log] = await db.insert(logs).values({ userId: user.id, date, kind: "meal", calories, proteinG: protein, source, note }).returning({ id: logs.id });
+  const [log] = await db.insert(logs).values({ userId: user.id, date, kind: "meal", calories, proteinG: typedProtein ?? protein, source, note }).returning({ id: logs.id });
   const [meal] = await db.insert(meals).values({ userId: user.id, logId: log.id, caption: note, dataB64: photo.buf.toString("base64") }).returning({ id: meals.id });
   notifyActivity(user, "meals", meal.id);
   adilbotReacts(meal.id, photo.buf, { username: user.username, calories: calories!, caption: note });

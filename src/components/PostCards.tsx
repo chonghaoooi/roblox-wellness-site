@@ -26,10 +26,10 @@ export function MealCard({ m, me }: { m: Meal; me?: string }) {
                       </form>
                     )}
                   </div>
-                    <p className="neon flex items-center gap-1.5 text-base leading-5">
-                      {m.calories !== null ? `${m.calories.toLocaleString("en-US")} kcal` : ""}
-                      {m.protein ? <span className="text-base text-white/80">· {m.protein}g protein</span> : null}
-                      {m.source === "ai" && <span className="rounded border-2 border-black bg-sun px-1 font-body text-[0.7rem] font-extrabold leading-4 text-black" title="Estimated by AI from the photo">AI</span>}
+                    <p className="neon flex min-w-0 items-center gap-1 whitespace-nowrap text-[0.95rem] leading-5">
+                      <span className="shrink-0">{m.calories !== null ? `${m.calories.toLocaleString("en-US")} kcal` : ""}</span>
+                      {m.protein ? <span className="min-w-0 truncate font-body text-[0.7rem] text-white/80" title={`${m.protein} g protein`}>· {m.protein}g protein</span> : null}
+                      {m.source === "ai" && <span className="shrink-0 rounded border-2 border-black bg-sun px-1 font-body text-[0.7rem] font-extrabold leading-4 text-black" title="Estimated by AI from the photo">AI</span>}
                     </p>
                   <div className="flex min-w-0 items-center gap-1 overflow-hidden">
                     <p className="min-w-0 flex-1 truncate text-sm font-semibold" title={m.caption ?? undefined}>{m.caption}</p>

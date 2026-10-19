@@ -52,6 +52,7 @@ export const manualStepsSchema = z.object({ date: dateField, steps: optNum("Step
 export const mealSchema = z.object({
   date: dateField,
   calories: optNum("Calories", 0, 5000, true),
+  protein: optNum("Protein", 0, 300, true),
   caption: z.preprocess(blank, z.string().trim().max(80, "Caption can be at most 80 characters").optional()),
 });
 

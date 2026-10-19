@@ -106,6 +106,10 @@ export function MealForm({ today, aiOn, compact }: { today: string; aiOn: boolea
             <label htmlFor="calories-m" className="label">Calories {aiOn && <span className="text-sm">(or AI)</span>}</label>
             <input id="calories-m" name="calories" type="number" inputMode="numeric" min={0} max={5000} className="field mt-1" placeholder={aiOn ? "AI guesses" : "kcal"} aria-invalid={fe.calories ? true : undefined} required={!aiOn} />
           </div>
+          <div className="w-28">
+            <label htmlFor="protein-m" className="label">Protein (g)</label>
+            <input id="protein-m" name="protein" type="number" inputMode="numeric" min={0} max={300} className="field mt-1" placeholder={aiOn ? "AI guesses" : "g"} aria-invalid={fe.protein ? true : undefined} />
+          </div>
           <div className="min-w-40 flex-1">
             <label htmlFor="caption-m" className="label">Caption</label>
             <input id="caption-m" name="caption" maxLength={80} className="field mt-1" placeholder="Tacos, obviously" />
@@ -123,6 +127,7 @@ export function MealForm({ today, aiOn, compact }: { today: string; aiOn: boolea
             {aiOn && <p className="mt-1 text-sm">The AI estimates the calories from your photo.</p>}
           </div>
           <Field id="calories-meal" name="calories" label={aiOn ? "Calories (optional, overrides the AI)" : "Calories"} type="number" inputMode="numeric" min={0} max={5000} required={!aiOn} err={fe.calories} />
+          <Field id="protein-meal" name="protein" label={aiOn ? "Protein in grams (optional, overrides the AI)" : "Protein in grams (optional)"} type="number" inputMode="numeric" min={0} max={300} err={fe.protein} />
           <Field id="caption-meal" name="caption" label="Caption (optional)" maxLength={80} />
           <button className="btn btn-green w-full" disabled={pending || !picked}><IconPlus />{pending ? (aiOn ? "Analysing…" : "Saving…") : "Add meal"}</button>
         </Shell>

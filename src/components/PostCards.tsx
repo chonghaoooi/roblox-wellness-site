@@ -181,19 +181,28 @@ function GymExpanded({ post, me, weightUnit }: { post: GymPost; me?: string; wei
   );
 }
 
+/** Background scene by local hour (APP_TIMEZONE): morning sun, afternoon sky, sunset, night moon. */
+function scene(iso: string) {
+  const h = Number(new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hourCycle: "h23", timeZone: process.env.APP_TIMEZONE || "UTC" }).format(new Date(iso)));
+  return h >= 5 && h < 10 ? "morning" : h >= 10 && h < 16 ? "afternoon" : h >= 16 && h < 19 ? "sunset" : "night";
+}
+
 /** Step and weigh-in cards: same footprint as the gym card, with votes and comments on the log row. */
-function LogCardFrame({ id, username, tag, top, line, createdAt, me, votes, comments }: {
-  id: number; username: string; tag: string; top: React.ReactNode; line: React.ReactNode; createdAt: string; me?: string;
+function LogCardFrame({ id, username, top, line, createdAt, me, votes, comments }: {
+  id: number; username: string; top: React.ReactNode; line: React.ReactNode; createdAt: string; me?: string;
   votes: { up: number; down: number; mine: number }; comments: { count: number; text: string | null; author: string | null };
 }) {
   return (
     <li id={`log-${id}`} className="meal-card panel scroll-mt-36 overflow-hidden !rounded-xl">
-      <div className="flex aspect-square w-full flex-col items-center justify-center gap-1 border-b-4 border-black bg-black/30 p-3 text-center">{top}</div>
+      <div className="relative aspect-square w-full overflow-hidden border-b-4 border-black bg-black/30">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={`/assets/scenes/${scene(createdAt)}.svg`} alt="" aria-hidden="true" className="absolute inset-0 size-full object-cover" />
+        {top}
+      </div>
       <div className="gym-card-details">
         <div className="flex items-center gap-2">
           <Avatar name={username} size={28} />
           <span className="min-w-0 flex-1 truncate font-display text-base">{username}</span>
-          <span className="shrink-0 rounded bg-[#7028d4] px-1 text-[10px] leading-5">{tag}</span>
         </div>
         <div className="min-h-0 overflow-hidden text-xs leading-4">{line}</div>
         <div className="flex min-w-0 items-center justify-between gap-1">
@@ -209,14 +218,12 @@ function LogCardFrame({ id, username, tag, top, line, createdAt, me, votes, comm
 /** A day's step count. */
 export function StepCard({ s, me }: { s: StepPost; me?: string }) {
   return (
-    <LogCardFrame id={s.id} username={s.username} tag="STEPS" me={me} createdAt={s.createdAt}
+    <LogCardFrame id={s.id} username={s.username} me={me} createdAt={s.createdAt}
       votes={{ up: s.upVotes, down: s.downVotes, mine: s.myVote }} comments={{ count: s.commentCount, text: s.commentText, author: s.commentAuthor }}
-      top={<>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/assets/sneaker.svg" alt="" width={56} height={56} className="size-14" />
-        <p className="neon font-display text-4xl leading-none">{s.steps.toLocaleString("en-US")}</p>
-        <p className="font-display text-sm text-sun">STEPS</p>
-      </>}
+      top={<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2.5 pt-8 text-left [text-shadow:0_1px_3px_rgb(0_0_0/0.7)]">
+        <p className="neon font-display text-2xl leading-none">{s.steps.toLocaleString("en-US")}</p>
+        <p className="font-display text-xs leading-4 text-white">STEPS</p>
+      </div>}
       line={<p className="font-semibold">{s.steps.toLocaleString("en-US")} steps logged</p>} />
   );
 }
@@ -228,14 +235,13 @@ export function WeighInCard({ w, me, weightUnit }: { w: WeighInPost; me?: string
   const change = delta === null ? "First weigh-in" : Math.abs(delta) < 0.05 ? "No change" : `${delta < 0 ? "▼" : "▲"} ${fmt(Math.abs(delta), 1)} ${weightUnit}`;
   const bmi = w.heightCm ? calcBmi(w.weightKg, w.heightCm) : null;
   return (
-    <LogCardFrame id={w.id} username={w.username} tag="WEIGH-IN" me={me} createdAt={w.createdAt}
+    <LogCardFrame id={w.id} username={w.username} me={me} createdAt={w.createdAt}
       votes={{ up: w.upVotes, down: w.downVotes, mine: w.myVote }} comments={{ count: w.commentCount, text: w.commentText, author: w.commentAuthor }}
-      top={<>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/assets/scale.svg" alt="" width={56} height={56} className="size-14" />
-        <p className="neon font-display text-4xl leading-none">{show(w.weightKg)} <span className="text-xl">{weightUnit}</span></p>
-        <p className="font-display text-sm text-sun">{change}</p>
-      </>}
+      top={<div className="absolute inset-y-0 right-0 flex w-3/5 flex-col items-end justify-center gap-0.5 bg-gradient-to-l from-black/55 to-transparent p-3 text-right [text-shadow:0_1px_3px_rgb(0_0_0/0.7)]">
+        <p className="neon font-display text-3xl leading-none">{show(w.weightKg)}<span className="ml-1 text-base">{weightUnit}</span></p>
+        <p className="font-display text-xs leading-4 text-white">WEIGH-IN</p>
+        <p className="font-display text-xs leading-4 text-sun">{change}</p>
+      </div>}
       line={<p className="font-semibold">{bmi === null ? change : `BMI ${fmt(bmi, 1)} · ${change}`}</p>} />
   );
 }

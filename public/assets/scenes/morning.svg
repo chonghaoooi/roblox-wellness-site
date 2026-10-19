@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b8fd6"/><stop offset=".45" stop-color="#f7b7a3"/><stop offset=".75" stop-color="#ffd9a0"/><stop offset="1" stop-color="#fff0c8"/></linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff6c8" stop-opacity=".95"/><stop offset=".35" stop-color="#ffd98a" stop-opacity=".55"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="h1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fb7c9"/><stop offset="1" stop-color="#c8d6dd"/></linearGradient>
+    <linearGradient id="h2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5f8d86"/><stop offset="1" stop-color="#8fb3a0"/></linearGradient>
+    <linearGradient id="h3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f6b55"/><stop offset="1" stop-color="#1d4d3d"/></linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#sky)"/>
+  <circle cx="270" cy="255" r="190" fill="url(#glow)"/>
+  <circle cx="270" cy="258" r="38" fill="#fff3b8"/>
+  <g fill="#fff" opacity=".7"><ellipse cx="90" cy="120" rx="52" ry="11"/><ellipse cx="125" cy="108" rx="34" ry="9"/><ellipse cx="320" cy="85" rx="46" ry="9"/><ellipse cx="60" cy="190" rx="40" ry="7"/></g>
+  <path d="M0 290 C60 250 110 280 170 262 C230 244 290 275 400 250 L400 400 L0 400Z" fill="url(#h1)"/>
+  <path d="M0 320 C70 290 130 320 200 303 C270 286 330 316 400 296 L400 400 L0 400Z" fill="url(#h2)"/>
+  <path d="M0 352 C80 332 150 356 230 340 C300 326 350 346 400 336 L400 400 L0 400Z" fill="url(#h3)"/>
+</svg>

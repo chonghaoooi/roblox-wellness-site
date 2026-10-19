@@ -105,6 +105,24 @@ export async function proteinToday(today: string): Promise<BoardRow[]> {
     .sort((a, b) => b.value - a.value || a.username.localeCompare(b.username));
 }
 
+/** Average daily protein over days with protein logged in [from, to], highest first. */
+export async function proteinPeriod(from: string, to: string): Promise<BoardRow[]> {
+  const r = await rows<{ username: string; protein: number; days: number; weight: number | null }>(sql`
+    select u.username, avg(d.p)::float8 as protein, count(*)::int as days,
+      (select weight_kg::float8 from logs w where w.user_id = u.id and w.weight_kg is not null order by w.date desc, w.id desc limit 1) as weight
+    from (select user_id, sum(protein_g) as p from logs
+          where kind = 'meal' and protein_g is not null and date between ${from}::date and ${to}::date
+          group by user_id, date) d
+    join users u on u.id = d.user_id
+    group by u.id, u.username`);
+  return r
+    .map((x) => {
+      const t = x.weight === null ? null : proteinTarget(x.weight);
+      return { username: x.username, value: Math.round(x.protein), sub: `${x.days} ${x.days === 1 ? "day" : "days"}${t === null ? "" : ` · target ${t} g`}`, tone: t === null ? undefined : x.protein >= t ? ("good" as const) : ("warn" as const) };
+    })
+    .sort((a, b) => b.value - a.value || a.username.localeCompare(b.username));
+}
+
 // ---------- Community trends ----------
 
 export type CommunityDay = {

@@ -12,6 +12,7 @@ import {
   heatmap,
   monthStart,
   periodBoards,
+  proteinPeriod,
   standing,
   todayRows,
   userAverages,
@@ -30,10 +31,12 @@ const f0 = (n: number) => fmt(n);
 export default async function TrendsPage() {
   const today = todayStr();
   const user = await getUser();
-  const [dayRows, week, month, comm, avgs, heat, extras] = await Promise.all([
+  const [dayRows, week, month, weekPro, monthPro, comm, avgs, heat, extras] = await Promise.all([
     todayRows(today),
     periodBoards(weekStart(today), today),
     periodBoards(monthStart(today), today),
+    proteinPeriod(weekStart(today), today),
+    proteinPeriod(monthStart(today), today),
     communitySeries(addDays(today, -179), today),
     userAverages(addDays(today, -29), today),
     heatmap(addDays(weekStart(today), -77), today),
@@ -61,13 +64,14 @@ export default async function TrendsPage() {
       <section className="wall py-12" aria-label="Weekly and monthly leaderboards">
         <div className="mx-auto max-w-[110rem] space-y-12 px-4" style={{ ["--row" as string]: "4rem" }}>
           {[
-            { key: "week", label: "This week", sub: "Weeks start on Monday.", b: week },
-            { key: "month", label: "This month", sub: "Resets on the 1st.", b: month },
-          ].map(({ key, label, sub, b }) => (
+            { key: "week", label: "This week", sub: "Weeks start on Monday.", b: week, pro: weekPro },
+            { key: "month", label: "This month", sub: "Resets on the 1st.", b: month, pro: monthPro },
+          ].map(({ key, label, sub, b, pro }) => (
             <div key={key}>
               <SectionTitle sub={sub}>{label.toUpperCase()}</SectionTitle>
-              <div className="grid items-start gap-8 lg:grid-cols-3">
+              <div className="grid items-start gap-8 lg:grid-cols-2 xl:grid-cols-4">
                 <Leaderboard id={`${key}-cal`} title="CALORIES" icon="taco" rows={b.calories} format={f0} me={me} compact emptyText={`Nobody has logged ${label.toLowerCase()}.`} rule="Average calories closest to goal." />
+                <Leaderboard id={`${key}-pro`} title="PRO" icon="protein" rows={pro} format={(n) => `${fmt(n)} g`} me={me} compact emptyText={`Nobody has logged protein ${label.toLowerCase()}.`} rule="Average protein per day with protein logged. Target is 1.6 g per kg." />
                 <Leaderboard id={`${key}-steps`} title="STEPS" icon="sneaker" rows={b.steps} format={f0} me={me} compact emptyText={`Nobody has logged ${label.toLowerCase()}.`} rule="Total steps." />
                 <Leaderboard id={`${key}-bmi`} title="BMI" icon="scale" rows={b.bmi} format={f1} me={me} compact emptyText={`Nobody has logged ${label.toLowerCase()}.`} rule={`Average BMI closest to ${HEALTHY_BMI}.`} />
               </div>

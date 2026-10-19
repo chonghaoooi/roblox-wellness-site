@@ -169,7 +169,7 @@ export async function addMeal(_: FormState, fd: FormData): Promise<FormState> {
     if (!aiEnabled) return bad("calories", "Enter the calories (AI estimates aren't set up yet)");
     if (!(await takeAiSlot(user.id))) return { error: `AI limit reached (${MAX_AI_PER_DAY}/day). Type the calories instead.` };
     try {
-      const g = await estimateMeal(photo.buf);
+      const g = await estimateMeal(photo.buf, caption);
       calories = g.calories;
       protein = g.protein;
       source = "ai";

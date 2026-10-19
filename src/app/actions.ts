@@ -12,6 +12,7 @@ import { userAverages, userEntries, userGymWeeks, userGymStreak, userLifts } fro
 import { createSession, destroySession, getSettings, getUser } from "@/lib/auth";
 import { addDays, todayStr } from "@/lib/dates";
 import { EXERCISES, type Exercise, isBodyweight, parseLiftRows } from "@/lib/lifts";
+import { syncCalorieGoals } from "@/lib/goal";
 import { adilbotReacts, adilbotReactsToGym } from "@/lib/adilbot";
 import { notifyActivity, removeCurrentPushDevice } from "@/lib/push";
 import { type FormState, loginSchema, manualStepsSchema, mealSchema, settingsSchema, signupSchema, toFieldErrors, weighInSchema } from "@/lib/validation";
@@ -113,6 +114,7 @@ export async function addWeighIn(_: FormState, fd: FormData): Promise<FormState>
   const weightKg = weight === undefined ? null : s.weightUnit === "lb" ? weight / 2.2046226218 : weight;
   if (weightKg !== null && (weightKg < 20 || weightKg > 300)) return bad("weight", "Weight is out of range");
   const [entry] = await requireDb().insert(logs).values({ userId: user.id, date, kind: "weight", weightKg, heightCm: heightCm ?? null, note: notes ?? null }).returning({ id: logs.id });
+  await syncCalorieGoals(user.id);
   notifyActivity(user, "weight", entry.id);
   refreshActivityPages();
   return { ok: true, message: "Saved" };
@@ -160,6 +162,7 @@ export async function addMeal(_: FormState, fd: FormData): Promise<FormState> {
   if ("error" in photo) return { error: photo.error };
   const db = requireDb();
   let calories = typed;
+  let protein: number | null = null;
   let source = "manual";
   let note = caption ?? null;
   if (calories === undefined) {
@@ -168,13 +171,14 @@ export async function addMeal(_: FormState, fd: FormData): Promise<FormState> {
     try {
       const g = await estimateMeal(photo.buf);
       calories = g.calories;
+      protein = g.protein;
       source = "ai";
       note ??= g.description || null;
     } catch (e) {
       return { error: `${e instanceof Error ? e.message : "AI failed."} You can type the calories instead.` };
     }
   }
-  const [log] = await db.insert(logs).values({ userId: user.id, date, kind: "meal", calories, source, note }).returning({ id: logs.id });
+  const [log] = await db.insert(logs).values({ userId: user.id, date, kind: "meal", calories, proteinG: protein, source, note }).returning({ id: logs.id });
   const [meal] = await db.insert(meals).values({ userId: user.id, logId: log.id, caption: note, dataB64: photo.buf.toString("base64") }).returning({ id: meals.id });
   notifyActivity(user, "meals", meal.id);
   adilbotReacts(meal.id, photo.buf, { username: user.username, calories: calories!, caption: note });

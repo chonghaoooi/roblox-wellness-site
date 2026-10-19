@@ -134,6 +134,13 @@
       "when": 1792322190016,
       "tag": "0018_flowery_pestilence",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792401998248,
+      "tag": "0019_whole_supreme_intelligence",
+      "breakpoints": true
     }
   ]
 }

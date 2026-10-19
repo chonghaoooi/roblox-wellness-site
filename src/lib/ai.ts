@@ -67,18 +67,19 @@ async function askAboutImage(jpeg: Buffer, prompt: string): Promise<unknown> {
   return JSON.parse(m[0]);
 }
 
-export type MealGuess = { calories: number; description: string };
+export type MealGuess = { calories: number; protein: number | null; description: string };
 
 /** Estimate the calories of the food in a photo. Throws a user-readable Error when it isn't food. */
 export async function estimateMeal(jpeg: Buffer): Promise<MealGuess> {
   const r = (await askAboutImage(
     jpeg,
-    'Estimate the total calories (kcal) of the food in this photo for the portion shown. JSON: {"is_food": boolean, "calories": integer, "description": "max 6 words"}.',
-  )) as { is_food?: boolean; calories?: number; description?: string };
+    'Estimate the total calories (kcal) of the food in this photo for the portion shown. Also estimate the grams of protein; use 0 when there is none worth counting. JSON: {"is_food": boolean, "calories": integer, "protein_g": integer, "description": "max 6 words"}.',
+  )) as { is_food?: boolean; calories?: number; protein_g?: number; description?: string };
   if (!r.is_food) throw new Error("That doesn't look like food.");
   const cal = Math.round(Number(r.calories));
   if (!Number.isFinite(cal) || cal < 0 || cal > 5000) throw new Error("Couldn't estimate calories from that photo.");
-  return { calories: cal, description: String(r.description ?? "").slice(0, 80) };
+  const protein = Math.round(Number(r.protein_g));
+  return { calories: cal, protein: Number.isFinite(protein) && protein > 0 && protein <= 300 ? protein : null, description: String(r.description ?? "").slice(0, 80) };
 }
 
 export type MealReaction = { vote: "up" | "down"; comment: string };

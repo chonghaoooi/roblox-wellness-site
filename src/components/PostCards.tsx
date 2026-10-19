@@ -28,6 +28,7 @@ export function MealCard({ m, me }: { m: Meal; me?: string }) {
                   </div>
                     <p className="neon flex items-center gap-1.5 text-base leading-5">
                       {m.calories !== null ? `${m.calories.toLocaleString("en-US")} kcal` : ""}
+                      {m.protein ? <span className="text-base text-white/80">· {m.protein}g protein</span> : null}
                       {m.source === "ai" && <span className="rounded border-2 border-black bg-sun px-1 font-body text-[0.7rem] font-extrabold leading-4 text-black" title="Estimated by AI from the photo">AI</span>}
                     </p>
                   <div className="flex min-w-0 items-center gap-1 overflow-hidden">

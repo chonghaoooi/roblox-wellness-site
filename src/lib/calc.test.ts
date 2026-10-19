@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { bmi, bmiCategory, bucketStart, caloriesOut, distanceKm, netCalories, percentile } from "./calc.ts";
+import { bmi, bmiCategory, bucketStart, caloriesOut, distanceKm, netCalories, percentile, suggestedCalorieGoal } from "./calc.ts";
 
 test("spreadsheet formulas", () => {
   assert.equal(caloriesOut(10000, 0.04), 400);
@@ -26,4 +26,11 @@ test("anything under 25 is healthy", () => {
   assert.equal(bmiCategory(24.9).label, "Healthy");
   assert.equal(bmiCategory(25).label, "Overweight");
   assert.equal(bmiCategory(30).label, "Obese");
+});
+
+test("suggestedCalorieGoal scales with weight and height, within bounds", () => {
+  assert.equal(suggestedCalorieGoal(70, 170), 2200);
+  assert.ok(suggestedCalorieGoal(90, 180) > suggestedCalorieGoal(60, 160));
+  assert.equal(suggestedCalorieGoal(20, 100), 1200);
+  assert.equal(suggestedCalorieGoal(300, 220), 4000);
 });

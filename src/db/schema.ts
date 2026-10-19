@@ -105,6 +105,7 @@ export const logs = pgTable(
     reps: integer("reps"),
     postId: integer("post_id").references((): AnyPgColumn => gymPosts.id, { onDelete: "cascade" }),
     calories: integer("calories"),
+    proteinG: integer("protein_g"),
     steps: integer("steps"),
     weightKg: real("weight_kg"),
     heightCm: real("height_cm"),

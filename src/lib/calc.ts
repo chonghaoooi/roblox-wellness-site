@@ -11,6 +11,12 @@ export const DEFAULTS = {
 
 export const HEALTHY_BMI = 22;
 
+/** Daily calorie goal from weight and height alone: Mifflin-St Jeor with an assumed age of 25 and a sex-neutral constant, times 1.4 for light activity, rounded to 50. */
+export function suggestedCalorieGoal(weightKg: number, heightCm: number): number {
+  const bmr = 10 * weightKg + 6.25 * heightCm - 5 * 25 - 78;
+  return Math.min(4000, Math.max(1200, Math.round((bmr * 1.4) / 50) * 50));
+}
+
 export type CalcSettings = {
   calorieGoal: number;
   stepGoal: number;

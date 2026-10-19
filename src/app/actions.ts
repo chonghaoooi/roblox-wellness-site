@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { and, desc, eq, sql } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireDb } from "@/db";
@@ -15,6 +16,7 @@ import { EXERCISES, type Exercise, isBodyweight, parseLiftRows } from "@/lib/lif
 import { syncCalorieGoals } from "@/lib/goal";
 import { adilbotReacts, adilbotReactsToGym } from "@/lib/adilbot";
 import { notifyActivity, removeCurrentPushDevice } from "@/lib/push";
+import { editPhotoSet } from "@/lib/post-photos";
 import { type FormState, loginSchema, manualStepsSchema, mealSchema, settingsSchema, signupSchema, toFieldErrors, weighInSchema } from "@/lib/validation";
 
 function refreshActivityPages() {
@@ -393,23 +395,25 @@ export async function deletePost(id: number) {
 }
 
 /**
- * Photos sent by an edit form: replace0..2 swap an existing photo, add1..3 fill the next free slots (3 photos max).
- * `have` is how many photos the post has now. Slot 0 is the main photo, slots 1 and 2 are the extras.
+ * Apply replacements/removals to the original positions before appending new photos.
+ * All resulting photos are saved in order, with no gaps (3 photos max).
  */
-async function pickEditedPhotos(fd: FormData, have: number): Promise<{ picked: { slot: number; buf: Buffer }[] } | { error: string }> {
-  const picked: { slot: number; buf: Buffer }[] = [];
-  let next = have;
+async function pickEditedPhotos(fd: FormData, current: string[]): Promise<{ photos: string[]; changed: boolean } | { error: string }> {
+  const rawRemoved = fd.getAll("remove");
+  if (rawRemoved.some(n => typeof n !== "string" || !/^[0-2]$/.test(n))) return { error: "Invalid photo selection." };
+  const removed = rawRemoved.map(Number);
+  const replacements: { slot: number; photo: string }[] = [];
+  const additions: string[] = [];
   for (const key of ["replace0", "replace1", "replace2", "add1", "add2", "add3"]) {
     const f = fd.get(key);
     if (!(f instanceof File) || f.size === 0) continue;
-    const replacing = key.startsWith("replace");
-    const slot = replacing ? Number(key.slice(7)) : next++;
-    if (slot > 2 || (replacing && slot >= have)) continue;
     const r = await readPhoto(fd, key);
     if ("error" in r) return { error: r.error };
-    picked.push({ slot, buf: r.buf });
+    const photo = r.buf.toString("base64");
+    if (key.startsWith("replace")) replacements.push({ slot: Number(key.slice(7)), photo });
+    else additions.push(photo);
   }
-  return { picked };
+  return editPhotoSet(current, removed, replacements, additions);
 }
 
 /** Owner edit of a gym post: notes and photos (lifts stay as logged). */
@@ -419,17 +423,18 @@ export async function editWorkout(id: number, _: FormState, fd: FormData): Promi
   const notes = String(fd.get("notes") ?? "").trim();
   if (notes.length > MAX_NOTES_CHARS) return bad("notes", `Notes can be at most ${MAX_NOTES_CHARS} characters`);
   const db = requireDb();
-  const [p] = await db.select({ hasMain: sql<boolean>`${gymPosts.photoB64} is not null` }).from(gymPosts).where(and(eq(gymPosts.id, id), eq(gymPosts.userId, user.id)));
+  const [p] = await db.select({ main: gymPosts.photoB64, editedAt: gymPosts.editedAt }).from(gymPosts).where(and(eq(gymPosts.id, id), eq(gymPosts.userId, user.id)));
   if (!p) return { error: "Post not found." };
-  const extra = (await db.select({ p: gymPostPhotos.position }).from(gymPostPhotos).where(eq(gymPostPhotos.postId, id))).length;
-  const found = await pickEditedPhotos(fd, (p.hasMain ? 1 : 0) + extra);
+  if (Number(fd.get("photoVersion")) !== (p.editedAt?.getTime() ?? 0)) { refreshActivityPages(); return { error: "Photos changed since you opened this post. Cancel and reopen the editor, then try again." }; }
+  const extra = await db.select({ photo: gymPostPhotos.dataB64 }).from(gymPostPhotos).where(eq(gymPostPhotos.postId, id)).orderBy(gymPostPhotos.position);
+  const found = await pickEditedPhotos(fd, [...(p.main ? [p.main] : []), ...extra.map(p => p.photo)]);
   if ("error" in found) return { error: found.error };
-  await db.update(gymPosts).set({ notes: notes || null, ...(found.picked.length ? { editedAt: new Date() } : {}) }).where(eq(gymPosts.id, id));
-  for (const { slot, buf } of found.picked) {
-    const b64 = buf.toString("base64");
-    if (slot === 0) await db.update(gymPosts).set({ photoB64: b64 }).where(eq(gymPosts.id, id));
-    else await db.insert(gymPostPhotos).values({ postId: id, position: slot, dataB64: b64 }).onConflictDoUpdate({ target: [gymPostPhotos.postId, gymPostPhotos.position], set: { dataB64: b64 } });
+  const changes: [BatchItem<"pg">, ...BatchItem<"pg">[]] = [db.update(gymPosts).set({ notes: notes || null, ...(found.changed ? { photoB64: found.photos[0] ?? null, editedAt: new Date() } : {}) }).where(and(eq(gymPosts.id, id), eq(gymPosts.userId, user.id)))];
+  if (found.changed) {
+    changes.push(db.delete(gymPostPhotos).where(eq(gymPostPhotos.postId, id)));
+    if (found.photos.length > 1) changes.push(db.insert(gymPostPhotos).values(found.photos.slice(1).map((dataB64, i) => ({ postId: id, position: i + 1, dataB64 }))));
   }
+  await db.batch(changes);
   refreshActivityPages();
   return { ok: true, message: "Saved" };
 }
@@ -442,23 +447,22 @@ export async function editMeal(id: number, _: FormState, fd: FormData): Promise<
   if (!parsed.success) return toFieldErrors(parsed.error);
   const { calories, protein, caption } = parsed.data;
   const db = requireDb();
-  const [m] = await db.select({ logId: meals.logId, calories: logs.calories }).from(meals).leftJoin(logs, eq(logs.id, meals.logId)).where(and(eq(meals.id, id), eq(meals.userId, user.id)));
+  const [m] = await db.select({ logId: meals.logId, calories: logs.calories, main: meals.dataB64, editedAt: meals.editedAt }).from(meals).leftJoin(logs, eq(logs.id, meals.logId)).where(and(eq(meals.id, id), eq(meals.userId, user.id)));
   if (!m) return { error: "Post not found." };
-  const have = 1 + (await db.select({ p: mealPhotos.position }).from(mealPhotos).where(eq(mealPhotos.mealId, id))).length;
-  const found = await pickEditedPhotos(fd, have);
+  if (Number(fd.get("photoVersion")) !== (m.editedAt?.getTime() ?? 0)) { refreshActivityPages(); return { error: "Photos changed since you opened this post. Cancel and reopen the editor, then try again." }; }
+  const extra = await db.select({ photo: mealPhotos.dataB64 }).from(mealPhotos).where(eq(mealPhotos.mealId, id)).orderBy(mealPhotos.position);
+  const found = await pickEditedPhotos(fd, [...(m.main ? [m.main] : []), ...extra.map(p => p.photo)]);
   if ("error" in found) return { error: found.error };
-  const picked = found.picked;
-  await db.update(meals).set({ caption: caption ?? null }).where(eq(meals.id, id));
-  for (const { slot, buf } of picked) {
-    const b64 = buf.toString("base64");
-    if (slot === 0) await db.update(meals).set({ dataB64: b64 }).where(eq(meals.id, id));
-    else await db.insert(mealPhotos).values({ mealId: id, position: slot, dataB64: b64 }).onConflictDoUpdate({ target: [mealPhotos.mealId, mealPhotos.position], set: { dataB64: b64 } });
+  const changes: [BatchItem<"pg">, ...BatchItem<"pg">[]] = [db.update(meals).set({ caption: caption ?? null, ...(found.changed ? { dataB64: found.photos[0] ?? null, originalB64: null, editedBy: null, editedAt: new Date() } : {}) }).where(and(eq(meals.id, id), eq(meals.userId, user.id)))];
+  if (found.changed) {
+    changes.push(db.delete(mealPhotos).where(eq(mealPhotos.mealId, id)));
+    if (found.photos.length > 1) changes.push(db.insert(mealPhotos).values(found.photos.slice(1).map((dataB64, i) => ({ mealId: id, position: i + 1, dataB64 }))));
   }
-  if (picked.length) await db.update(meals).set({ originalB64: null, editedBy: null, editedAt: new Date() }).where(eq(meals.id, id));
   if (m.logId) {
     const changed = calories !== undefined && calories !== m.calories;
-    await db.update(logs).set({ note: caption ?? null, proteinG: protein ?? null, ...(calories !== undefined ? { calories } : {}), ...(changed ? { source: "manual" } : {}) }).where(and(eq(logs.id, m.logId), eq(logs.userId, user.id)));
+    changes.push(db.update(logs).set({ note: caption ?? null, proteinG: protein ?? null, ...(calories !== undefined ? { calories } : {}), ...(changed ? { source: "manual" } : {}) }).where(and(eq(logs.id, m.logId), eq(logs.userId, user.id))));
   }
+  await db.batch(changes);
   refreshActivityPages();
   return { ok: true, message: "Saved" };
 }

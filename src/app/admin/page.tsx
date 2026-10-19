@@ -75,7 +75,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         {data.meals.length === 0 ? <EmptyState>No matching meal photos.</EmptyState> : <div className="grid items-start gap-5 md:grid-cols-2 lg:grid-cols-3">
           {data.meals.slice(0, ADMIN_PAGE_SIZE).map((meal) => <article key={meal.id} className="panel min-w-0 space-y-4 overflow-hidden p-4">
             <h2 className="font-display text-xl">{meal.username} <span className="text-sm text-sun">· meal #{meal.id}</span></h2>
-            <img src={`/admin/photo/meal/${meal.id}`} alt={`Meal photo by ${meal.username}`} className="aspect-square w-full rounded-lg bg-black object-contain" loading="lazy" />
+            {meal.hasPhoto && <img src={`/admin/photo/meal/${meal.id}`} alt={`Meal photo by ${meal.username}`} className="aspect-square w-full rounded-lg bg-black object-contain" loading="lazy" />}
             <p className="break-words">{meal.caption || "No caption"}</p>{meal.calories !== null && <p className="neon">{fmt(meal.calories)} kcal</p>}
             <details><summary className="cursor-pointer font-display text-lg text-neon">Edit meal</summary><AdminMealEditor meal={meal} /></details>
             <div className="flex flex-wrap gap-3"><AdminDeleteButton id={meal.id} mode="meal-photo" label="Remove photo only" confirmation={`Remove ${meal.username}'s meal photo? The calorie log stays.`} /><AdminDeleteButton id={meal.id} mode="meal" label="Delete meal" confirmation={`Delete ${meal.username}'s meal #${meal.id} and its calories? This cannot be undone.`} /></div>

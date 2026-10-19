@@ -169,6 +169,13 @@
       "when": 1792420530542,
       "tag": "0023_nostalgic_silk_fever",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792422053092,
+      "tag": "0024_dry_lake",
+      "breakpoints": true
     }
   ]
 }

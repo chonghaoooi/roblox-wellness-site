@@ -15,7 +15,7 @@ const when = (iso: string) =>
 
 export function MealCard({ m, me }: { m: Meal; me?: string }) {
   return (
-    <PostCardShell domId={`meal-${m.id}`} id={m.id} count={m.photoCount} v={m.photoV} alt={m.caption ? `${m.username}'s meal: ${m.caption}` : `Meal by ${m.username}`} expanded={<MealExpanded m={m} me={me} />}>
+    <PostCardShell domId={`meal-${m.id}`} id={m.id} count={m.photoCount} v={m.photoV} alt={m.caption ? `${m.username}'s meal: ${m.caption}` : `Meal by ${m.username}`} top={<div className="flex aspect-square w-full items-center justify-center border-b-4 border-black bg-black/30 p-3 font-display text-white/80">No photos attached</div>} expanded={<MealExpanded m={m} me={me} />}>
                 <div className="meal-card-details">
                   <div className="flex items-center gap-2">
                     <Avatar name={m.username} size={28} />
@@ -84,7 +84,7 @@ export function GymCard({ post, me, weightUnit, wide = "", compact }: { post: Gy
                   </div>
     }>
                   <div className="space-y-4 p-4">
-                    {!post.hasPhoto && !post.notes && post.lifts.length === 0 && <p className="text-sm">This workout photo is no longer available.</p>}
+                    {!post.hasPhoto && !post.notes && post.lifts.length === 0 && <p className="text-sm">No photos attached.</p>}
                     {post.notes && <p className="whitespace-pre-wrap break-words text-base leading-relaxed">{post.notes}</p>}
                     {post.lifts.length > 0 && <ul className="space-y-2" aria-label="Lifts in this workout">
                       {post.lifts.map((lift, i) => {

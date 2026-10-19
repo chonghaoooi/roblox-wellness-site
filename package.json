@@ -8,7 +8,7 @@
     "start": "next start",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "test": "node --experimental-strip-types --test src/lib/calc.test.ts src/lib/lifts.test.ts src/lib/admin-validation.test.ts src/lib/push.test.ts src/lib/tracker.test.ts src/lib/reminders.test.ts src/lib/notification-prompt.test.ts src/lib/typing-space.test.ts src/lib/weight-classes.test.ts src/lib/shop.test.ts src/lib/validation.test.ts",
+    "test": "node --experimental-strip-types --test src/lib/calc.test.ts src/lib/lifts.test.ts src/lib/admin-validation.test.ts src/lib/push.test.ts src/lib/tracker.test.ts src/lib/reminders.test.ts src/lib/notification-prompt.test.ts src/lib/typing-space.test.ts src/lib/weight-classes.test.ts src/lib/shop.test.ts src/lib/validation.test.ts src/lib/post-photos.test.ts",
     "admin:create": "node --env-file=.env scripts/create-admin.mjs",
     "mobile:sync": "cap sync && node scripts/configure-native-health.mjs",
     "mobile:android": "cap open android",

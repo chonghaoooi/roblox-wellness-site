@@ -9,7 +9,7 @@ export type AdminLog = {
   exercise: string | null; liftKg: number | null; reps: number | null;
 };
 export type AdminPost = { id: number; username: string; date: string; notes: string | null; hasPhoto: boolean; liftCount: number };
-export type AdminMeal = { id: number; username: string; caption: string | null; calories: number | null; logId: number | null; createdAt: string };
+export type AdminMeal = { id: number; username: string; caption: string | null; calories: number | null; logId: number | null; createdAt: string; hasPhoto: boolean };
 export type AuditRow = { id: number; username: string; action: string; target: string; details: string; createdAt: string };
 export const ADMIN_PAGE_SIZE = 20;
 
@@ -32,7 +32,7 @@ export async function moderationData(view: string, query: string, kind: string, 
     order by p.created_at desc, p.id desc limit ${ADMIN_PAGE_SIZE + 1} offset ${offset}
   `) : null;
   const meals = view === "meals" ? await db.execute(sql`
-    select m.id, u.username, m.caption, m.log_id as "logId", l.calories, m.created_at::text as "createdAt"
+    select m.id, u.username, m.caption, m.log_id as "logId", l.calories, m.created_at::text as "createdAt", (m.data_b64 is not null) as "hasPhoto"
     from meals m join users u on u.id=m.user_id left join logs l on l.id=m.log_id
     where u.username ilike ${match} order by m.created_at desc, m.id desc
     limit ${ADMIN_PAGE_SIZE + 1} offset ${offset}

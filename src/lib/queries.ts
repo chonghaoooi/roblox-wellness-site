@@ -296,8 +296,8 @@ export type Meal = { id: number; username: string; caption: string | null; calor
 export async function recentMeals(viewerId?: number): Promise<Meal[]> {
   return rows<Meal>(sql`
     select m.id, u.username, m.caption, l.calories, l.protein_g as protein, l.source, m.created_at::text as "createdAt",
-      v.up as "upVotes", v.down as "downVotes", v.mine as "myVote", eu.username as "swappedBy", coalesce(extract(epoch from m.edited_at)::bigint, 0)::float8 as "photoV",
-      1 + (select count(*)::int from meal_photos mp where mp.meal_id = m.id) as "photoCount",
+      v.up as "upVotes", v.down as "downVotes", v.mine as "myVote", eu.username as "swappedBy", coalesce(floor(extract(epoch from m.edited_at) * 1000), 0)::float8 as "photoV",
+      ((m.data_b64 is not null)::int + (select count(*)::int from meal_photos mp where mp.meal_id = m.id)) as "photoCount",
       coalesce(c.total, 0)::int as "commentCount", c.text as "commentText", c.username as "commentAuthor"
     from meals m join users u on u.id = m.user_id left join logs l on l.id = m.log_id
     left join users eu on eu.id = m.edited_by and m.original_b64 is not null
@@ -427,7 +427,7 @@ export async function gymPosts(limit = 30, viewerId?: number): Promise<GymPost[]
   return rows<GymPost>(sql`
     select p.id, u.username, p.date::text as date, p.notes, (p.photo_b64 is not null) as "hasPhoto",
            ((p.photo_b64 is not null)::int + (select count(*)::int from gym_post_photos gp where gp.post_id = p.id)) as "photoCount",
-           coalesce(extract(epoch from p.edited_at)::bigint, 0)::float8 as "photoV",
+           coalesce(floor(extract(epoch from p.edited_at) * 1000), 0)::float8 as "photoV",
            p.created_at::text as "createdAt",
            coalesce((select json_agg(json_build_object('exercise', l.exercise, 'kg', l.lift_kg, 'reps', l.reps) order by l.id)
                      from logs l where l.post_id = p.id), '[]'::json) as lifts,
@@ -543,7 +543,7 @@ export async function prankableMeals(meId: number): Promise<ShopMeal[]> {
   return rows<ShopMeal>(sql`
     select m.id, u.username, m.caption, m.created_at::text as "createdAt"
     from meals m join users u on u.id = m.user_id
-    where m.user_id <> ${meId} order by m.created_at desc limit 40`);
+    where m.user_id <> ${meId} and m.data_b64 is not null order by m.created_at desc limit 40`);
 }
 
 export type LedgerRow = { id: number; amountCents: number; kind: string; item: string | null; note: string | null; createdAt: string };

@@ -52,11 +52,11 @@ export function PostCardShell({ kind = "meals", domId, id, count, v, alt, top, h
       {open && (
         <dialog ref={post} className="meal-post-dialog" aria-label="Post" onClose={() => setOpen(false)} onClick={backdropClose}>
           <button type="button" onClick={() => post.current?.close()} className="absolute right-2 top-2 z-10 flex size-10 items-center justify-center rounded-lg bg-black/60 text-xl text-white" aria-label="Close post">×</button>
-          {count > 0 && <PhotoCarousel kind={kind} id={id} count={count} v={v} alt={alt} onIndex={track} onOpen={openZoom} className="aspect-square w-full bg-black" />}
+          {count > 0 && <PhotoCarousel key={`${v}-${count}`} kind={kind} id={id} count={count} v={v} alt={alt} onIndex={track} onOpen={openZoom} className="aspect-square w-full bg-black" />}
           <div className="space-y-2 p-4">{expanded}</div>
         </dialog>
       )}
-      {zoom && (
+      {zoom && count > 0 && (
         <dialog ref={big} className="meal-zoom-dialog" aria-label="Photo" onClose={() => setZoom(false)} onClick={backdropClose}>
           <button type="button" onClick={() => big.current?.close()} className="absolute right-3 top-3 z-10 flex size-11 items-center justify-center rounded-lg bg-white/20 text-2xl text-white" aria-label="Close photo">×</button>
           <PhotoCarousel kind={kind} id={id} count={count} v={v} alt={alt} contain start={zoomStart} className="h-full w-full" />

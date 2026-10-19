@@ -143,7 +143,7 @@ export const meals = pgTable(
     logId: integer("log_id").references(() => logs.id, { onDelete: "cascade" }),
     caption: text("caption"),
     // Resized JPEG, base64. Kept in Postgres so no separate blob store is needed.
-    dataB64: text("data_b64").notNull(),
+    dataB64: text("data_b64"),
     /** Set when someone bought a photo swap: the uploader's own photo, so it can be restored. */
     originalB64: text("original_b64"),
     editedBy: integer("edited_by").references(() => users.id, { onDelete: "set null" }),

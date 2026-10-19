@@ -1,0 +1,1 @@
+ALTER TABLE "meals" ALTER COLUMN "data_b64" DROP NOT NULL;

@@ -83,7 +83,7 @@ export async function buyMealSwap(_: FormState, fd: FormData): Promise<FormState
       edited_by = ${user.id}, edited_at = now()
     where id = ${mealId} and exists (select 1 from spent) returning id`,
     sql`select m.id from meals m join users u on u.id = m.user_id
-      where m.id = ${mealId} and m.user_id <> ${user.id} for update of m, u`);
+      where m.id = ${mealId} and m.user_id <> ${user.id} and m.data_b64 is not null for update of m, u`);
   return error ?? { ok: true, message: `Meal photo swapped for ${sgd(SHOP_ITEMS.meal.cents)}. The uploader can restore their original.` };
 }
 

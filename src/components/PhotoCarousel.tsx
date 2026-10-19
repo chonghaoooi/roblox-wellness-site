@@ -6,14 +6,14 @@ import { useEffect, useRef, useState } from "react";
  * A meal's photos as a swipeable strip (native scroll-snap) with dots. `auto` slides right to the last photo, then back
  * left, pausing 3s on each; any swipe or dot tap restarts that wait. One photo renders as a plain image, no dots.
  */
-export function PhotoCarousel({ id, count, v, alt, w, auto, contain, start = 0, onIndex, onOpen, className = "" }: {
-  id: number; count: number; v: number; alt: string; w?: 240 | 480 | 720; auto?: boolean; contain?: boolean; start?: number;
+export function PhotoCarousel({ kind = "meals", id, count, v, alt, w, auto, contain, start = 0, onIndex, onOpen, className = "" }: {
+  kind?: "meals" | "gym"; id: number; count: number; v: number; alt: string; w?: 240 | 480 | 720; auto?: boolean; contain?: boolean; start?: number;
   onIndex?: (i: number) => void; onOpen?: () => void; className?: string;
 }) {
   const strip = useRef<HTMLDivElement>(null);
   const dir = useRef(1);
   const [i, setI] = useState(start);
-  const src = (n: number) => `/api/meals/${id}?${n ? `i=${n}&` : ""}${w ? `w=${w}&` : ""}v=${v}`;
+  const src = (n: number) => `/api/${kind}/${id}?${n ? `i=${n}&` : ""}${w ? `w=${w}&` : ""}v=${v}`;
 
   function go(n: number) {
     const el = strip.current;

@@ -1,11 +1,12 @@
-import { deleteMeal, deletePost, editMeal } from "@/app/actions";
+import { deleteMeal, deletePost, editMeal, editWorkout } from "@/app/actions";
 import { restoreMealPhoto } from "@/app/shop/actions";
 import { kgToLb } from "@/lib/calc";
 import { EXERCISES, isBodyweight, type Exercise } from "@/lib/lifts";
-import type { GymPost, Meal } from "@/lib/queries";
+import type { GymPost, Meal, StepPost } from "@/lib/queries";
 import { IconTrash } from "./icons";
-import { MealOwnerActions } from "./MealOwnerActions";
-import { MealCardShell } from "./MealCardShell";
+import { PostCardShell } from "./PostCardShell";
+import { PostOwnerActions } from "./PostOwnerActions";
+import { PhotoCarousel } from "./PhotoCarousel";
 import { MealComments } from "./MealComments";
 import { MealVotes } from "./MealVotes";
 import { Avatar, fmt } from "./ui";
@@ -15,7 +16,7 @@ const when = (iso: string) =>
 
 export function MealCard({ m, me }: { m: Meal; me?: string }) {
   return (
-    <MealCardShell id={m.id} count={m.photoCount} v={m.photoV} alt={m.caption ? `${m.username}'s meal: ${m.caption}` : `Meal by ${m.username}`} expanded={<MealExpanded m={m} me={me} />}>
+    <PostCardShell domId={`meal-${m.id}`} id={m.id} count={m.photoCount} v={m.photoV} alt={m.caption ? `${m.username}'s meal: ${m.caption}` : `Meal by ${m.username}`} expanded={<MealExpanded m={m} me={me} />}>
                 <div className="meal-card-details">
                   <div className="flex items-center gap-2">
                     <Avatar name={m.username} size={28} />
@@ -42,7 +43,7 @@ export function MealCard({ m, me }: { m: Meal; me?: string }) {
                   </div>
                   <MealComments mealId={m.id} owner={m.username} caption={m.caption} count={m.commentCount} text={m.commentText} author={m.commentAuthor} loggedIn={Boolean(me)} />
                 </div>
-    </MealCardShell>
+    </PostCardShell>
   );
 }
 
@@ -54,7 +55,7 @@ function MealExpanded({ m, me }: { m: Meal; me?: string }) {
         <Avatar name={m.username} size={32} />
         <span className="min-w-0 flex-1 truncate font-display text-lg">{m.username}</span>
         <time className="shrink-0 text-xs text-white/75" dateTime={m.createdAt}>{when(m.createdAt)}</time>
-        {m.username === me && <MealOwnerActions mealId={m.id} photoCount={m.photoCount} photoV={m.photoV} deleteAction={deleteMeal.bind(null, m.id)} editAction={editMeal.bind(null, m.id)} caption={m.caption} calories={m.calories} protein={m.protein} />}
+        {m.username === me && <PostOwnerActions mealId={m.id} photoCount={m.photoCount} photoV={m.photoV} deleteAction={deleteMeal.bind(null, m.id)} editAction={editMeal.bind(null, m.id)} caption={m.caption} calories={m.calories} protein={m.protein} />}
       </div>
       <p className="neon flex flex-wrap items-center gap-x-2 text-lg">
         {m.calories !== null && <span>{m.calories.toLocaleString("en-US")} kcal</span>}
@@ -84,8 +85,7 @@ export function GymCard({ post, me, weightUnit, wide = "", compact }: { post: Gy
                     {post.username === me && <form action={deletePost.bind(null, post.id)}><button className="btn btn-red !min-h-10 !px-3 !py-1" aria-label={`Delete your workout post from ${post.date}`}><IconTrash /></button></form>}
                   </div>
                   {post.hasPhoto && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`/api/gym/${post.id}`} alt={`Workout shared by ${post.username}`} loading="lazy" decoding="async" className="max-h-96 w-full bg-black/40 object-contain" />
+                    <PhotoCarousel kind="gym" id={post.id} count={post.photoCount} v={post.photoV} alt={`Workout shared by ${post.username}`} contain auto className="h-96 w-full bg-black/40" />
                   )}
                   <div className="space-y-4 p-4">
                     {!post.hasPhoto && !post.notes && post.lifts.length === 0 && <p className="text-sm">This workout photo is no longer available.</p>}
@@ -119,29 +119,22 @@ const liftText = (lift: GymPost["lifts"][number], weightUnit: "kg" | "lb") => {
   return `${bw && lift.kg === 0 ? "BW" : `${bw ? "+" : ""}${fmt(load, 1)}${weightUnit}`} × ${lift.reps}`;
 };
 
-/** Same footprint as a meal card: a square top (photo, or the notes when there is no photo) and a small details area. */
+/** Same footprint as a meal card: a square top (photo set, or the notes when there is no photo) and a small details area. */
 function GymCardCompact({ post, me, weightUnit }: { post: GymPost; me?: string; weightUnit: "kg" | "lb" }) {
+  const alt = `Workout shared by ${post.username}`;
+  const notesTop = (
+    <div className="aspect-square w-full overflow-y-auto border-b-4 border-black bg-black/30 p-3">
+      <p className="mb-1 font-display text-sm text-sun">WORKOUT</p>
+      {post.notes ? <p className="whitespace-pre-wrap break-words text-sm leading-snug">{post.notes}</p> : post.lifts.length === 0 && <p className="text-sm">Checked in at the gym.</p>}
+    </div>
+  );
   return (
-    <li id={`gym-post-${post.id}`} className="meal-card panel scroll-mt-36 overflow-hidden !rounded-xl">
-      {post.hasPhoto ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={`/api/gym/${post.id}?w=480`} alt={`Workout shared by ${post.username}`} loading="lazy" decoding="async" className="aspect-square w-full border-b-4 border-black bg-black/40 object-cover" />
-      ) : (
-        <div className="aspect-square w-full overflow-y-auto border-b-4 border-black bg-black/30 p-3">
-          <p className="mb-1 font-display text-sm text-sun">WORKOUT</p>
-          {post.notes ? <p className="whitespace-pre-wrap break-words text-sm leading-snug">{post.notes}</p> : post.lifts.length === 0 && <p className="text-sm">Checked in at the gym.</p>}
-        </div>
-      )}
+    <PostCardShell kind="gym" domId={`gym-post-${post.id}`} id={post.id} count={post.photoCount} v={post.photoV} alt={alt} top={notesTop} expanded={<GymExpanded post={post} me={me} weightUnit={weightUnit} />}>
       <div className="gym-card-details">
         <div className="flex items-center gap-2">
           <Avatar name={post.username} size={28} />
           <span className="min-w-0 flex-1 truncate font-display text-base">{post.username}</span>
           <span className="shrink-0 rounded bg-[#7028d4] px-1 text-[10px] leading-5">GYM</span>
-          {post.username === me && (
-            <form action={deletePost.bind(null, post.id)}>
-              <button className="inline-flex size-7 items-center justify-center rounded-md text-white/70 hover:bg-red-500/20 hover:text-red-200" aria-label={`Delete your workout post from ${post.date}`}><IconTrash /></button>
-            </form>
-          )}
         </div>
         <div className="min-h-0 space-y-0.5 overflow-y-auto pr-1 text-xs leading-4">
           {post.lifts.length > 0 && (
@@ -153,11 +146,57 @@ function GymCardCompact({ post, me, weightUnit }: { post: GymPost; me?: string; 
           )}
           {post.hasPhoto && post.notes && <p className="break-words font-semibold">{post.notes}</p>}
         </div>
-        <div className="flex items-center justify-between gap-1">
+        <div className="flex min-w-0 items-center justify-between gap-1">
           <time className="min-w-0 truncate text-[10px] leading-6 text-white/75" dateTime={post.createdAt} title={when(post.createdAt)}>{when(post.createdAt)}</time>
           <MealVotes kind="gym" mealId={post.id} upVotes={post.upVotes} downVotes={post.downVotes} myVote={post.myVote} loggedIn={Boolean(me)} />
         </div>
         <MealComments kind="gym" mealId={post.id} owner={post.username} caption={post.notes} count={post.commentCount} text={post.commentText} author={post.commentAuthor} loggedIn={Boolean(me)} />
+      </div>
+    </PostCardShell>
+  );
+}
+
+/** The full workout shown when a gym card is opened: all notes and lifts, votes, comments, and edit/delete for the owner. */
+function GymExpanded({ post, me, weightUnit }: { post: GymPost; me?: string; weightUnit: "kg" | "lb" }) {
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-2">
+        <Avatar name={post.username} size={32} />
+        <span className="min-w-0 flex-1 truncate font-display text-lg">{post.username}</span>
+        <span className="shrink-0 rounded bg-[#7028d4] px-1 text-[10px] leading-5">GYM</span>
+        <time className="shrink-0 text-xs text-white/75" dateTime={post.createdAt}>{when(post.createdAt)}</time>
+        {post.username === me && <PostOwnerActions kind="gym" mealId={post.id} photoCount={post.photoCount} photoV={post.photoV} deleteAction={deletePost.bind(null, post.id)} editAction={editWorkout.bind(null, post.id)} caption={post.notes} />}
+      </div>
+      {post.notes && <p className="whitespace-pre-wrap break-words text-base">{post.notes}</p>}
+      {post.lifts.length > 0 && (
+        <ul className="space-y-1" aria-label="Lifts in this workout">
+          {post.lifts.map((lift, i) => (
+            <li key={i} className="flex justify-between gap-2 rounded-lg border-2 border-white/20 bg-black/40 px-3 py-1.5"><span className="min-w-0 truncate font-display">{EXERCISES[lift.exercise as Exercise] ?? lift.exercise}</span><span className="neon shrink-0">{liftText(lift, weightUnit)}</span></li>
+          ))}
+        </ul>
+      )}
+      <MealVotes kind="gym" mealId={post.id} upVotes={post.upVotes} downVotes={post.downVotes} myVote={post.myVote} loggedIn={Boolean(me)} />
+      <MealComments kind="gym" mealId={post.id} owner={post.username} caption={post.notes} count={post.commentCount} text={post.commentText} author={post.commentAuthor} loggedIn={Boolean(me)} />
+    </>
+  );
+}
+
+/** A day's step count, same footprint as the other cards. */
+export function StepCard({ s }: { s: StepPost }) {
+  return (
+    <li className="meal-card panel overflow-hidden !rounded-xl">
+      <div className="flex aspect-square w-full flex-col items-center justify-center gap-1 border-b-4 border-black bg-black/30 p-3 text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/assets/sneaker.svg" alt="" width={56} height={56} className="size-14" />
+        <p className="neon font-display text-4xl leading-none">{s.steps.toLocaleString("en-US")}</p>
+        <p className="font-display text-sm text-sun">STEPS</p>
+      </div>
+      <div className="flex min-w-0 flex-col gap-1 p-2">
+        <div className="flex items-center gap-2">
+          <Avatar name={s.username} size={28} />
+          <span className="min-w-0 flex-1 truncate font-display text-base">{s.username}</span>
+        </div>
+        <time className="truncate text-[10px] leading-6 text-white/75" dateTime={s.createdAt} title={when(s.createdAt)}>{when(s.createdAt)}</time>
       </div>
     </li>
   );

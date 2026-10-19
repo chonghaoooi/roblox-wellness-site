@@ -212,9 +212,10 @@ export function WorkoutForm({ today, done, weightUnit }: { today: string; done: 
   const [lifts, setLifts] = useState<WorkoutLift[]>([emptyLift(0)]);
   const [notes, setNotes] = useState("");
   const [s, run, pending] = useActionState(async (prev: FormState, fd: FormData): Promise<FormState> => {
-    const photo = fd.get("photo");
-    if (photo instanceof File && photo.size > 0) {
-      try { fd.set("photo", await shrink(photo, 1000, 0.8)); }
+    for (const key of ["photo", "photo2", "photo3"]) {
+      const photo = fd.get(key);
+      if (!(photo instanceof File) || photo.size === 0) continue;
+      try { fd.set(key, await shrink(photo, 1000, 0.8)); }
       catch { return { error: "Couldn't read that image. Try a JPEG or PNG." }; }
     }
     const result = await addWorkout(prev, fd);
@@ -261,6 +262,7 @@ export function WorkoutForm({ today, done, weightUnit }: { today: string; done: 
           <div>
             <label htmlFor="gym-photo" className="label">Workout photo (optional)</label>
             <PhotoInput id="gym-photo" />
+            <MoreMealPhotos idPrefix="gym" />
             <p className="mt-1 text-sm">Photos are public and stay in the blog until you or an admin remove them.</p>
           </div>
           <p className="text-sm">Notes, photos and lifts are shared publicly. Posting also checks you in once for today. All fields can be blank for a check-in.</p>

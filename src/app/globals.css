@@ -3,6 +3,7 @@
 /* Reserve the existing compact card footer: comments never change its height. */
 .meal-card-details {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 28px 20px 20px 24px 28px;
   gap: 3px;
   height: 148px;
@@ -11,6 +12,7 @@
 /* Same 148px footprint as a meal card; the middle row (lifts and notes) scrolls instead of overflowing. */
 .gym-card-details {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 28px minmax(0, 1fr) 24px 28px;
   gap: 3px;
   height: 148px;

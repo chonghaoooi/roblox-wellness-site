@@ -5,7 +5,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireDb } from "@/db";
-import { aiCalls, coachMessages, gymPosts, logs, mealPhotos, meals, settings, users } from "@/db/schema";
+import { aiCalls, coachMessages, gymPostPhotos, gymPosts, logs, mealPhotos, meals, settings, users } from "@/db/schema";
 import { type ChatMsg, aiEnabled, chat, estimateMeal, readSteps } from "@/lib/ai";
 import { COACH_SYSTEM, formatCoachContext } from "@/lib/coach";
 import { userAverages, userEntries, userGymWeeks, userGymStreak, userLifts } from "@/lib/queries";
@@ -309,6 +309,14 @@ export async function addWorkout(_: FormState, fd: FormData): Promise<FormState>
     if ("error" in photo) return { error: photo.error };
     photoB64 = photo.buf.toString("base64");
   }
+  const extraPhotos: string[] = [];
+  if (photoB64) for (const key of ["photo2", "photo3"]) {
+    const f = fd.get(key);
+    if (!(f instanceof File) || f.size === 0) continue;
+    const more = await readPhoto(fd, key);
+    if ("error" in more) return { error: more.error };
+    extraPhotos.push(more.buf.toString("base64"));
+  }
 
   const s = await getSettings(user.id);
   const toKg = (w: number) => (s.weightUnit === "lb" ? w / 2.2046226218 : w);
@@ -353,6 +361,7 @@ export async function addWorkout(_: FormState, fd: FormData): Promise<FormState>
   `);
   const { newCheckIn, postId, checkInId } = (result.rows as { newCheckIn: boolean; postId: number | null; checkInId: number | null }[])[0];
   if (postId) {
+    if (extraPhotos.length) await db.insert(gymPostPhotos).values(extraPhotos.map((b, i) => ({ postId, position: i + 1, dataB64: b })));
     notifyActivity(user, "gym", postId, true);
     adilbotReactsToGym(
       postId,
@@ -375,6 +384,48 @@ export async function deletePost(id: number) {
   refreshActivityPages();
 }
 
+/**
+ * Photos sent by an edit form: replace0..2 swap an existing photo, add1..3 fill the next free slots (3 photos max).
+ * `have` is how many photos the post has now. Slot 0 is the main photo, slots 1 and 2 are the extras.
+ */
+async function pickEditedPhotos(fd: FormData, have: number): Promise<{ picked: { slot: number; buf: Buffer }[] } | { error: string }> {
+  const picked: { slot: number; buf: Buffer }[] = [];
+  let next = have;
+  for (const key of ["replace0", "replace1", "replace2", "add1", "add2", "add3"]) {
+    const f = fd.get(key);
+    if (!(f instanceof File) || f.size === 0) continue;
+    const replacing = key.startsWith("replace");
+    const slot = replacing ? Number(key.slice(7)) : next++;
+    if (slot > 2 || (replacing && slot >= have)) continue;
+    const r = await readPhoto(fd, key);
+    if ("error" in r) return { error: r.error };
+    picked.push({ slot, buf: r.buf });
+  }
+  return { picked };
+}
+
+/** Owner edit of a gym post: notes and photos (lifts stay as logged). */
+export async function editWorkout(id: number, _: FormState, fd: FormData): Promise<FormState> {
+  const user = await getUser();
+  if (!user) redirect("/login");
+  const notes = String(fd.get("notes") ?? "").trim();
+  if (notes.length > MAX_NOTES_CHARS) return bad("notes", `Notes can be at most ${MAX_NOTES_CHARS} characters`);
+  const db = requireDb();
+  const [p] = await db.select({ hasMain: sql<boolean>`${gymPosts.photoB64} is not null` }).from(gymPosts).where(and(eq(gymPosts.id, id), eq(gymPosts.userId, user.id)));
+  if (!p) return { error: "Post not found." };
+  const extra = (await db.select({ p: gymPostPhotos.position }).from(gymPostPhotos).where(eq(gymPostPhotos.postId, id))).length;
+  const found = await pickEditedPhotos(fd, (p.hasMain ? 1 : 0) + extra);
+  if ("error" in found) return { error: found.error };
+  await db.update(gymPosts).set({ notes: notes || null, ...(found.picked.length ? { editedAt: new Date() } : {}) }).where(eq(gymPosts.id, id));
+  for (const { slot, buf } of found.picked) {
+    const b64 = buf.toString("base64");
+    if (slot === 0) await db.update(gymPosts).set({ photoB64: b64 }).where(eq(gymPosts.id, id));
+    else await db.insert(gymPostPhotos).values({ postId: id, position: slot, dataB64: b64 }).onConflictDoUpdate({ target: [gymPostPhotos.postId, gymPostPhotos.position], set: { dataB64: b64 } });
+  }
+  refreshActivityPages();
+  return { ok: true, message: "Saved" };
+}
+
 /** Owner edit of a meal post: caption, calories and protein. Changing the calories makes the entry a manual one. */
 export async function editMeal(id: number, _: FormState, fd: FormData): Promise<FormState> {
   const user = await getUser();
@@ -385,20 +436,10 @@ export async function editMeal(id: number, _: FormState, fd: FormData): Promise<
   const db = requireDb();
   const [m] = await db.select({ logId: meals.logId, calories: logs.calories }).from(meals).leftJoin(logs, eq(logs.id, meals.logId)).where(and(eq(meals.id, id), eq(meals.userId, user.id)));
   if (!m) return { error: "Post not found." };
-  // Photos: replace0..2 swap an existing photo, add1/add2 append new ones (3 max). Any change busts the image cache.
   const have = 1 + (await db.select({ p: mealPhotos.position }).from(mealPhotos).where(eq(mealPhotos.mealId, id))).length;
-  const picked: { slot: number; buf: Buffer }[] = [];
-  let next = have;
-  for (const key of ["replace0", "replace1", "replace2", "add1", "add2"]) {
-    const f = fd.get(key);
-    if (!(f instanceof File) || f.size === 0) continue;
-    const slot = key.startsWith("replace") ? Number(key.slice(7)) : next++;
-    if (slot >= have && key.startsWith("replace")) continue;
-    if (slot > 2) continue;
-    const r = await readPhoto(fd, key);
-    if ("error" in r) return { error: r.error };
-    picked.push({ slot, buf: r.buf });
-  }
+  const found = await pickEditedPhotos(fd, have);
+  if ("error" in found) return { error: found.error };
+  const picked = found.picked;
   await db.update(meals).set({ caption: caption ?? null }).where(eq(meals.id, id));
   for (const { slot, buf } of picked) {
     const b64 = buf.toString("base64");

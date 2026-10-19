@@ -5,13 +5,13 @@ import type { FormState } from "@/lib/validation";
 import { shrink } from "@/lib/shrink";
 import { IconTrash } from "./icons";
 
-type Props = { mealId: number; photoCount: number; photoV: number; deleteAction: () => Promise<void>; editAction: (s: FormState, fd: FormData) => Promise<FormState>; caption: string | null; calories: number | null; protein: number | null };
+type Props = { kind?: "meal" | "gym"; mealId: number; photoCount: number; photoV: number; deleteAction: () => Promise<void>; editAction: (s: FormState, fd: FormData) => Promise<FormState>; caption?: string | null; calories?: number | null; protein?: number | null };
 
 /** Edit and delete for your own post. Lives in the opened post, not on the card. */
-export function MealOwnerActions({ mealId, photoCount, photoV, deleteAction, editAction, caption, calories, protein }: Props) {
+export function PostOwnerActions({ kind = "meal", mealId, photoCount, photoV, deleteAction, editAction, caption, calories, protein }: Props) {
   const [editing, setEditing] = useState(false);
   const [s, run, pending] = useActionState(async (prev: FormState, fd: FormData): Promise<FormState> => {
-    for (const key of ["replace0", "replace1", "replace2", "add1", "add2"]) {
+    for (const key of ["replace0", "replace1", "replace2", "add1", "add2", "add3"]) {
       const f = fd.get(key);
       if (!(f instanceof File) || f.size === 0) continue;
       try { fd.set(key, await shrink(f, 1000, 0.8)); } catch { return { error: "Couldn't read that image. Try a JPEG or PNG." }; }
@@ -38,7 +38,7 @@ export function MealOwnerActions({ mealId, photoCount, photoV, deleteAction, edi
             {Array.from({ length: photoCount }, (_, k) => (
               <div key={k} className="flex items-center gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/api/meals/${mealId}?${k ? `i=${k}&` : ""}w=240&v=${photoV}`} alt="" className="size-12 shrink-0 rounded-md border-2 border-black object-cover" />
+                <img src={`/api/${kind === "gym" ? "gym" : "meals"}/${mealId}?${k ? `i=${k}&` : ""}w=240&v=${photoV}`} alt="" className="size-12 shrink-0 rounded-md border-2 border-black object-cover" />
                 <label className="min-w-0 flex-1 text-xs">Change photo {k + 1}<input name={`replace${k}`} type="file" accept="image/*" className="field mt-0.5 !min-h-0 !py-1 !text-sm" /></label>
               </div>
             ))}
@@ -46,6 +46,10 @@ export function MealOwnerActions({ mealId, photoCount, photoV, deleteAction, edi
               <label key={k} className="block text-xs">Add photo {photoCount + k + 1}<input name={`add${k + 1}`} type="file" accept="image/*" className="field mt-0.5 !min-h-0 !py-1 !text-sm" /></label>
             ))}
           </div>
+          {kind === "gym" ? <>
+            <label className="label" htmlFor="edit-notes">Notes</label>
+            <textarea id="edit-notes" name="notes" rows={4} maxLength={1500} defaultValue={caption ?? ""} className="field" aria-invalid={fe.notes ? true : undefined} />
+          </> : <>
           <label className="label" htmlFor="edit-caption">Caption</label>
           <input id="edit-caption" name="caption" maxLength={80} defaultValue={caption ?? ""} className="field" aria-invalid={fe.caption ? true : undefined} />
           <div className="flex gap-2">
@@ -58,6 +62,7 @@ export function MealOwnerActions({ mealId, photoCount, photoV, deleteAction, edi
               <input id="edit-pro" name="protein" type="number" inputMode="numeric" min={0} max={300} defaultValue={protein ?? ""} className="field" aria-invalid={fe.protein ? true : undefined} />
             </div>
           </div>
+          </>}
           {s.error && <p className="err text-sm" role="alert">{s.error}</p>}
           <div className="flex gap-2">
             <button className="btn btn-green flex-1" disabled={pending}>{pending ? "Saving…" : "Save"}</button>

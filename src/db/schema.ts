@@ -85,6 +85,7 @@ export const gymPosts = pgTable(
     date: date("date", { mode: "string" }).notNull(),
     notes: text("notes"),
     photoB64: text("photo_b64"), // resized JPEG; retained until manually removed
+    editedAt: timestamp("edited_at", { withTimezone: true }), // bumps the photo URLs when the owner changes photos
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("gym_posts_created_idx").on(t.createdAt), index("gym_posts_user_idx").on(t.userId)],
@@ -161,6 +162,17 @@ export const mealPhotos = pgTable(
     dataB64: text("data_b64").notNull(),
   },
   (t) => [primaryKey({ columns: [t.mealId, t.position] }), check("meal_photos_position_check", sql`${t.position} in (1, 2)`)],
+);
+
+/** Extra photos (positions 1 and 2) of a gym post; photo 0 stays in gym_posts.photo_b64. */
+export const gymPostPhotos = pgTable(
+  "gym_post_photos",
+  {
+    postId: integer("post_id").notNull().references(() => gymPosts.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    dataB64: text("data_b64").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.postId, t.position] }), check("gym_post_photos_position_check", sql`${t.position} in (1, 2)`)],
 );
 
 export const mealVotes = pgTable(

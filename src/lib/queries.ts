@@ -314,6 +314,19 @@ export async function recentMeals(viewerId?: number): Promise<Meal[]> {
     order by m.created_at desc limit 60`);
 }
 
+// ---------- Steps ----------
+
+export type StepPost = { id: number; username: string; steps: number; source: string | null; createdAt: string };
+
+/** Each person's highest step count per day over the last 3 days, as feed cards. */
+export async function recentSteps(today: string): Promise<StepPost[]> {
+  return rows<StepPost>(sql`
+    select distinct on (l.user_id, l.date) l.id, u.username, l.steps::int as steps, l.source, l.created_at::text as "createdAt"
+    from logs l join users u on u.id = l.user_id
+    where l.kind = 'steps' and l.steps > 0 and l.date >= ${addDays(today, -2)}::date
+    order by l.user_id, l.date, l.steps desc, l.id desc`);
+}
+
 // ---------- Gym ----------
 
 export type GymBoards = {
@@ -363,6 +376,8 @@ export type GymPost = {
   date: string;
   notes: string | null;
   hasPhoto: boolean;
+  photoCount: number;
+  photoV: number;
   createdAt: string;
   lifts: { exercise: string; kg: number; reps: number }[];
   upVotes: number;
@@ -377,6 +392,8 @@ export type GymPost = {
 export async function gymPosts(limit = 30, viewerId?: number): Promise<GymPost[]> {
   return rows<GymPost>(sql`
     select p.id, u.username, p.date::text as date, p.notes, (p.photo_b64 is not null) as "hasPhoto",
+           ((p.photo_b64 is not null)::int + (select count(*)::int from gym_post_photos gp where gp.post_id = p.id)) as "photoCount",
+           coalesce(extract(epoch from p.edited_at)::bigint, 0)::float8 as "photoV",
            p.created_at::text as "createdAt",
            coalesce((select json_agg(json_build_object('exercise', l.exercise, 'kg', l.lift_kg, 'reps', l.reps) order by l.id)
                      from logs l where l.post_id = p.id), '[]'::json) as lifts,

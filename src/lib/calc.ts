@@ -11,6 +11,9 @@ export const DEFAULTS = {
 
 export const HEALTHY_BMI = 22;
 
+/** Daily protein target: 1.6 g per kg of bodyweight, rounded to 5 g. */
+export const proteinTarget = (weightKg: number) => Math.round((1.6 * weightKg) / 5) * 5;
+
 /** Daily calorie goal from weight and height alone: Mifflin-St Jeor with an assumed age of 25 and a sex-neutral constant, times 1.4 for light activity, rounded to 50. */
 export function suggestedCalorieGoal(weightKg: number, heightCm: number): number {
   const bmr = 10 * weightKg + 6.25 * heightCm - 5 * 25 - 78;

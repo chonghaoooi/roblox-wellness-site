@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
-import { HEALTHY_BMI, bmiCategory, bucketStart, percentile } from "./calc";
+import { HEALTHY_BMI, bmiCategory, bucketStart, percentile, proteinTarget } from "./calc";
 import { addDays } from "./dates";
 import { type Exercise, type LiftScore, rankLifts } from "./lifts";
 import { weightClassOf } from "./weight-classes";
@@ -54,7 +54,7 @@ function calRow(username: string, cal: number, goal: number): BoardRow & { d: nu
     username,
     value: cal,
     d: Math.abs(off),
-    sub: off === 0 ? "On goal" : `${Math.abs(off).toLocaleString("en-US")} ${off < 0 ? "under" : "over"} goal`,
+    sub: `${off === 0 ? "On goal" : `${Math.abs(off).toLocaleString("en-US")} ${off < 0 ? "under" : "over"} goal`} · target ${goal.toLocaleString("en-US")}`,
     tone: Math.abs(off) <= goal * 0.1 ? "good" : "warn",
   };
 }
@@ -87,6 +87,22 @@ export async function periodBoards(from: string, to: string): Promise<Boards> {
       .sort((a, b) => b.value - a.value),
     calories: r.flatMap((x) => (x.cal === null ? [] : [calRow(x.username, x.cal, x.goal)])).sort(byD),
   };
+}
+
+/** Protein eaten today (AI-estimated meals), highest first, against 1.6 g per kg of each person's latest weight. */
+export async function proteinToday(today: string): Promise<BoardRow[]> {
+  const r = await rows<{ username: string; protein: number; weight: number | null }>(sql`
+    select u.username, sum(l.protein_g)::int as protein,
+      (select weight_kg::float8 from logs w where w.user_id = u.id and w.weight_kg is not null order by w.date desc, w.id desc limit 1) as weight
+    from logs l join users u on u.id = l.user_id
+    where l.kind = 'meal' and l.date = ${today}::date and l.protein_g is not null
+    group by u.id, u.username`);
+  return r
+    .map((x) => {
+      const t = x.weight === null ? null : proteinTarget(x.weight);
+      return { username: x.username, value: x.protein, sub: t === null ? undefined : `target ${t} g`, tone: t === null ? undefined : x.protein >= t ? ("good" as const) : ("warn" as const) };
+    })
+    .sort((a, b) => b.value - a.value || a.username.localeCompare(b.username));
 }
 
 // ---------- Community trends ----------

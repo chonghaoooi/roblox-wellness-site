@@ -7,7 +7,7 @@ import { Avatar } from "./ui";
 type Props = {
   id: string;
   title: string;
-  icon: "taco" | "sneaker" | "scale" | "dumbbell" | "flame" | "trophy" | "ruler" | "kettlebell";
+  icon: "taco" | "protein" | "sneaker" | "scale" | "dumbbell" | "flame" | "trophy" | "ruler" | "kettlebell";
   rows: BoardRow[];
   format: (n: number) => string;
   rule: string;

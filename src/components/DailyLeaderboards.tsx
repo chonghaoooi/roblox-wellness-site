@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 const metrics = [
   { key: "calories", label: "Calories", icon: "taco" },
-  { key: "gym", label: "Gym", icon: "dumbbell" },
+  { key: "protein", label: "Protein", icon: "protein" },
   { key: "height", label: "Height", icon: "ruler" },
   { key: "weight", label: "Weight", icon: "kettlebell" },
   { key: "bmi", label: "BMI", icon: "scale" },

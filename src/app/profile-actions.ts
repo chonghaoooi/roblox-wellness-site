@@ -3,7 +3,7 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { getSettings, getUser } from "@/lib/auth";
-import { bmi as calcBmi, bmiCategory, kgToLb } from "@/lib/calc";
+import { bmi as calcBmi, bmiCategory, kgToLb, proteinTarget } from "@/lib/calc";
 import { addDays, todayStr } from "@/lib/dates";
 import { userGymStreak } from "@/lib/queries";
 import { weightClassOf } from "@/lib/weight-classes";
@@ -20,6 +20,9 @@ export type Profile = {
   weightClass: string | null;
   avgSteps: number | null;
   avgCalories: number | null;
+  calorieGoal: number;
+  avgProtein: number | null;
+  proteinGoal: number | null;
   gymDays30: number;
   gymStreak: number;
   meals30: number;
@@ -64,9 +67,11 @@ export async function getProfile(username: string): Promise<Profile | null> {
   };
 
   const counts = (await db.execute(sql`
-    select (select count(distinct date) from logs where user_id = ${u.id} and kind = 'gym' and date >= ${from}::date)::int as gym,
+    select (select coalesce(calorie_goal, 2000) from settings where user_id = ${u.id}) as goal,
+           (select round(avg(p))::int from (select sum(protein_g) as p from logs where user_id = ${u.id} and kind = 'meal' and protein_g is not null and date >= ${from}::date group by date) x) as protein,
+           (select count(distinct date) from logs where user_id = ${u.id} and kind = 'gym' and date >= ${from}::date)::int as gym,
            (select count(*) from meals where user_id = ${u.id} and created_at >= now() - interval '30 days')::int as meals`)) as unknown as {
-    rows: { gym: number; meals: number }[];
+    rows: { goal: number | null; protein: number | null; gym: number; meals: number }[];
   };
   const streak = await userGymStreak(u.id, today);
 
@@ -81,6 +86,9 @@ export async function getProfile(username: string): Promise<Profile | null> {
     weightClass: lastW ? weightClassOf(lastW.weightKg!).label : null,
     avgSteps: avg(days.map((d) => d.steps)),
     avgCalories: avg(days.map((d) => d.calories)),
+    calorieGoal: counts.rows[0]?.goal ?? 2000,
+    avgProtein: counts.rows[0]?.protein ?? null,
+    proteinGoal: lastW ? proteinTarget(lastW.weightKg!) : null,
     gymDays30: counts.rows[0]?.gym ?? 0,
     gymStreak: streak?.visits ?? 0,
     meals30: counts.rows[0]?.meals ?? 0,

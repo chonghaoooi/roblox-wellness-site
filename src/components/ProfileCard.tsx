@@ -90,6 +90,9 @@ function ProfileModal({ name, onClose }: { name: string; onClose: () => void }) 
               <Stat label="Class" value={p.weightClass ?? "-"} />
               <Stat label="Avg steps" value={n(p.avgSteps)} />
               <Stat label="Avg kcal" value={n(p.avgCalories)} />
+              <Stat label="Target kcal" value={n(p.calorieGoal)} />
+              <Stat label="Avg protein" value={n(p.avgProtein, " g")} />
+              <Stat label="Target protein" value={n(p.proteinGoal, " g")} />
               <Stat label="Gym days" value={p.gymDays30} />
               <Stat label="Gym streak" value={p.gymStreak} />
               <Stat label="Meals" value={p.meals30} />

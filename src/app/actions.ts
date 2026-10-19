@@ -374,3 +374,22 @@ export async function deletePost(id: number) {
   await requireDb().delete(gymPosts).where(and(eq(gymPosts.id, id), eq(gymPosts.userId, user.id)));
   refreshActivityPages();
 }
+
+/** Owner edit of a meal post: caption, calories and protein. Changing the calories makes the entry a manual one. */
+export async function editMeal(id: number, _: FormState, fd: FormData): Promise<FormState> {
+  const user = await getUser();
+  if (!user) redirect("/login");
+  const parsed = mealSchema.omit({ date: true }).safeParse(obj(fd));
+  if (!parsed.success) return toFieldErrors(parsed.error);
+  const { calories, protein, caption } = parsed.data;
+  const db = requireDb();
+  const [m] = await db.select({ logId: meals.logId, calories: logs.calories }).from(meals).leftJoin(logs, eq(logs.id, meals.logId)).where(and(eq(meals.id, id), eq(meals.userId, user.id)));
+  if (!m) return { error: "Post not found." };
+  await db.update(meals).set({ caption: caption ?? null }).where(eq(meals.id, id));
+  if (m.logId) {
+    const changed = calories !== undefined && calories !== m.calories;
+    await db.update(logs).set({ note: caption ?? null, proteinG: protein ?? null, ...(calories !== undefined ? { calories } : {}), ...(changed ? { source: "manual" } : {}) }).where(and(eq(logs.id, m.logId), eq(logs.userId, user.id)));
+  }
+  refreshActivityPages();
+  return { ok: true, message: "Saved" };
+}

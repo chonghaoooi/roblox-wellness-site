@@ -1,9 +1,10 @@
-import { deleteMeal, deletePost } from "@/app/actions";
+import { deleteMeal, deletePost, editMeal } from "@/app/actions";
 import { restoreMealPhoto } from "@/app/shop/actions";
 import { kgToLb } from "@/lib/calc";
 import { EXERCISES, isBodyweight, type Exercise } from "@/lib/lifts";
 import type { GymPost, Meal } from "@/lib/queries";
 import { IconTrash } from "./icons";
+import { MealOwnerActions } from "./MealOwnerActions";
 import { MealCardShell } from "./MealCardShell";
 import { MealComments } from "./MealComments";
 import { MealVotes } from "./MealVotes";
@@ -19,11 +20,6 @@ export function MealCard({ m, me }: { m: Meal; me?: string }) {
                   <div className="flex items-center gap-2">
                     <Avatar name={m.username} size={28} />
                     <span className="min-w-0 flex-1 truncate font-display text-base">{m.username}</span>
-                    {m.username === me && (
-                      <form action={deleteMeal.bind(null, m.id)}>
-                        <button className="inline-flex size-7 items-center justify-center rounded-md text-white/70 hover:bg-red-500/20 hover:text-red-200" aria-label="Delete this meal"><IconTrash /></button>
-                      </form>
-                    )}
                   </div>
                     <p className="neon flex min-w-0 items-center gap-1 whitespace-nowrap text-[0.95rem] leading-5">
                       <span className="shrink-0">{m.calories !== null ? `${m.calories.toLocaleString("en-US")} kcal` : ""}</span>
@@ -54,10 +50,11 @@ export function MealCard({ m, me }: { m: Meal; me?: string }) {
 function MealExpanded({ m, me }: { m: Meal; me?: string }) {
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Avatar name={m.username} size={32} />
         <span className="min-w-0 flex-1 truncate font-display text-lg">{m.username}</span>
         <time className="shrink-0 text-xs text-white/75" dateTime={m.createdAt}>{when(m.createdAt)}</time>
+        {m.username === me && <MealOwnerActions deleteAction={deleteMeal.bind(null, m.id)} editAction={editMeal.bind(null, m.id)} caption={m.caption} calories={m.calories} protein={m.protein} />}
       </div>
       <p className="neon flex flex-wrap items-center gap-x-2 text-lg">
         {m.calories !== null && <span>{m.calories.toLocaleString("en-US")} kcal</span>}

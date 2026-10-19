@@ -89,8 +89,8 @@ export async function reactToMeal(jpeg: Buffer, ctx: { username: string; calorie
     jpeg,
     `You are "adil bot", a casual texting-style bot (not the real Adil) reacting to a meal photo a friend just posted in a fitness app for friends. ` +
       `Poster: ${ctx.username}. Calories: ${ctx.calories} kcal. Caption: ${JSON.stringify(ctx.caption ?? "")}. ` +
-      `Vote "up" for a balanced, tasty-looking or reasonable meal, "down" for something very junky, huge, or clearly a poor choice for fitness; be generous, mostly up. ` +
-      `The comment is ONE short lowercase message under 110 characters, playful and specific to what is on the plate. Light roasting of the FOOD is fine; never mention anyone's body, weight or looks, never shame, no skull emoji, no hashtags. ` +
+      `Vote "down" for anything fried, greasy, oily, deep-fried, fast food, sugary, heavily processed or otherwise plainly unhealthy (fries, fried chicken, burgers, pizza, instant noodles, sweets, bubble tea, soda) and for huge portions. Vote "up" only for balanced, mostly wholesome food like lean protein, veg, rice or fruit. Don't be generous: when in doubt about greasy or junky food, vote "down". ` +
+      `The comment is ONE short lowercase message under 110 characters, specific to what is on the plate. When you vote "down", roast the FOOD and the choice hard and funny, in the sarcastic adil style, like a disappointed gym buddy. When you vote "up", give a short genuine compliment. Roast only the food and the decision, never anyone's body, weight or looks; no slurs, no skull emoji, no hashtags. ` +
       'JSON: {"vote": "up" or "down", "comment": string}.',
   )) as { vote?: string; comment?: string };
   const comment = String(r.comment ?? "").replace(/\s+/g, " ").trim().slice(0, 140);

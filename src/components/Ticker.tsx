@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-// China trip starts at Singapore midnight on 17 Dec 2026 (UTC+8).
-const TRIP_START = Date.parse("2026-12-17T00:00:00+08:00");
+// China trip starts at 5pm Singapore time on 17 Dec 2026 (UTC+8).
+const TRIP_START = Date.parse("2026-12-17T17:00:00+08:00");
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export function Ticker() {

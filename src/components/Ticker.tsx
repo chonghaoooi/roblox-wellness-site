@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 const TRIP_START = Date.parse("2026-12-17T17:00:00+08:00");
 const pad = (n: number) => String(n).padStart(2, "0");
 const fmt = (n: number) => n.toLocaleString("en-US");
-const CYCLE_MS = 4000;
+const CYCLE_MS = 3000;
 
 const Roblox = () => <img src="/icons/roblox-192-v2.png" alt="" className="mx-1 inline-block h-[1.1em] w-[1.1em] rounded-sm align-[-0.15em]" />;
 

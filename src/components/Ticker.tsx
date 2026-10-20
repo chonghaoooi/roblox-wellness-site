@@ -16,6 +16,7 @@ export function Ticker() {
   const [view, setView] = useState(0);
   useEffect(() => {
     setNow(Date.now());
+    setView(Math.floor(Math.random() * 1000)); // random starting view; render uses view % views.length
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);

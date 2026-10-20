@@ -28,11 +28,12 @@ export function Ticker() {
     { icon: "🐼", label: `${Math.floor(s / 86400)}d ${pad(Math.floor(s / 3600) % 24)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}` },
     { icon: "🚿", label: `${fmt(Math.floor(s / 300))} showers` },
     { icon: <Roblox />, label: `${fmt(Math.floor(s / 300))} Steal an Egg days` },
-    { icon: "🍜", label: `${fmt(Math.floor(s / 180))} instant noodles` },
     { icon: "⛏️", label: `${fmt(Math.floor(s / 1200))} Minecraft days` },
+    { icon: "🌌", label: `${fmt(s * 230)} km around the Milky Way` },
+    { icon: "👶", label: `${fmt(Math.floor(s * 4.3))} babies born` },
+    { icon: "🪦", label: `${fmt(Math.floor(s * 1.8))} people die` },
+    { icon: "🩸", label: `${fmt(s * 2400000)} red blood cells made` },
     { icon: "👀", label: `${fmt(Math.floor(s / 4))} blinks` },
-    { icon: "💤", label: `${Math.ceil(s / 86400)} sleeps` },
-    { icon: "⏱️", label: `${fmt(s)} seconds` },
   ];
   const v = views[view % views.length];
 

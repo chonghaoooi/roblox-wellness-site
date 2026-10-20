@@ -6,10 +6,11 @@ import { useEffect, useState } from "react";
 const TRIP_START = Date.parse("2026-12-17T17:00:00+08:00");
 const pad = (n: number) => String(n).padStart(2, "0");
 const fmt = (n: number) => n.toLocaleString("en-US");
+const CYCLE_MS = 4000;
 
-// Tap the bar to flip between ways of looking at the same countdown.
-const VIEWS = ["clock", "sleeps", "hours", "minutes", "seconds"] as const;
+const Roblox = () => <img src="/icons/roblox-192-v2.png" alt="" className="mx-1 inline-block h-[1.1em] w-[1.1em] rounded-sm align-[-0.15em]" />;
 
+// Cycles by itself every few seconds; tap to jump to the next one.
 export function Ticker() {
   const [now, setNow] = useState<number | null>(null);
   const [view, setView] = useState(0);
@@ -22,26 +23,38 @@ export function Ticker() {
   const s = Math.max(0, Math.floor((TRIP_START - (now ?? TRIP_START)) / 1000));
   const done = now !== null && s === 0;
   const lastDay = now !== null && s > 0 && s < 86400;
-  const mode = VIEWS[view];
-  const text =
-    now === null ? "--d --:--:--"
-    : mode === "clock" ? `${pad(Math.floor(s / 86400))}d ${pad(Math.floor(s / 3600) % 24)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`
-    : mode === "sleeps" ? `${Math.ceil(s / 86400)} sleeps`
-    : mode === "hours" ? `${fmt(Math.floor(s / 3600))} hours`
-    : mode === "minutes" ? `${fmt(Math.floor(s / 60))} minutes`
-    : `${fmt(s)} seconds`;
+
+  const views: { label: string; icon: React.ReactNode }[] = [
+    { icon: "🐼", label: `${Math.floor(s / 86400)}d ${pad(Math.floor(s / 3600) % 24)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}` },
+    { icon: "🚿", label: `${fmt(Math.floor(s / 300))} showers` },
+    { icon: <Roblox />, label: `${fmt(Math.floor(s / 300))} Steal an Egg days` },
+    { icon: "🍜", label: `${fmt(Math.floor(s / 180))} instant noodles` },
+    { icon: "⛏️", label: `${fmt(Math.floor(s / 1200))} Minecraft days` },
+    { icon: "👀", label: `${fmt(Math.floor(s / 4))} blinks` },
+    { icon: "💤", label: `${Math.ceil(s / 86400)} sleeps` },
+    { icon: "⏱️", label: `${fmt(s)} seconds` },
+  ];
+  const v = views[view % views.length];
+
+  // Restarting on every change means a tap also resets the auto-advance timer.
+  useEffect(() => {
+    const id = setInterval(() => setView((n) => (n + 1) % views.length), CYCLE_MS);
+    return () => clearInterval(id);
+  }, [view, views.length]);
 
   return (
     <button
       type="button"
-      onClick={() => setView((v) => (v + 1) % VIEWS.length)}
+      onClick={() => setView((n) => (n + 1) % views.length)}
       className={`block w-full overflow-hidden border-b-4 border-black bg-black py-1 text-center font-display text-base text-sun sm:text-lg ${lastDay ? "motion-safe:animate-pulse" : ""}`}
-      aria-label={done ? "China trip is here" : `China trip countdown: ${text}. Tap to change the view.`}
+      aria-label={done ? "China trip is here" : `China trip countdown: ${now === null ? "loading" : v.label}. Tap for another view.`}
     >
       {done ? (
         <span>🇨🇳 CHINA TRIP TIME!! 🐼🎉🥟</span>
+      ) : now === null ? (
+        <>🐼 China trip in <span className="tabular-nums">--d --:--:--</span> ✈️</>
       ) : (
-        <>🐼 China trip in <span className="tabular-nums">{text}</span> {lastDay ? "🔥" : "✈️"}</>
+        <>China trip in {v.icon} <span className="tabular-nums">{v.label}</span> {lastDay ? "🔥" : "✈️"}</>
       )}
     </button>
   );

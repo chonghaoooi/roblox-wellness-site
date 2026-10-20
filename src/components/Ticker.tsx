@@ -1,22 +1,24 @@
-// Trip day is 58 days after 2026-10-20 (Singapore). Counts down at Singapore midnight.
-const TRIP_DAY = Date.UTC(2026, 11, 17);
+"use client";
 
-// Always-on scrolling banner. Pauses (static, centred) for people who prefer reduced motion.
-export async function Ticker() {
-  const [y, m, d] = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Singapore" }).split("-").map(Number);
-  const days = Math.max(0, Math.round((TRIP_DAY - Date.UTC(y, m - 1, d)) / 864e5));
-  const message = `China trip countdown: ${days} ${days === 1 ? "day" : "days"} left`;
+import { useEffect, useState } from "react";
+
+// China trip starts at Singapore midnight on 17 Dec 2026 (UTC+8).
+const TRIP_START = Date.parse("2026-12-17T00:00:00+08:00");
+const pad = (n: number) => String(n).padStart(2, "0");
+
+export function Ticker() {
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const s = Math.max(0, Math.floor((TRIP_START - (now ?? TRIP_START)) / 1000));
+  const text = now === null ? "" : `${pad(Math.floor(s / 86400))}d ${pad(Math.floor(s / 3600) % 24)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
   return (
-    <div className="ticker overflow-hidden border-b-4 border-black bg-black py-1 text-sun" role="marquee" aria-label={message}>
-      <div className="ticker-track font-display text-base sm:text-lg" aria-hidden>
-        {[0, 1].map((n) => (
-          <span key={n} className="ticker-set">
-            {Array.from({ length: 6 }, (_, i) => (
-              <span key={i} className="ticker-message">{message}{" • "}</span>
-            ))}
-          </span>
-        ))}
-      </div>
+    <div className="overflow-hidden border-b-4 border-black bg-black py-1 text-center font-display text-base text-sun sm:text-lg" role="timer" aria-label="China trip countdown">
+      China trip in <span className="tabular-nums">{text || "--d --:--:--"}</span>
     </div>
   );
 }

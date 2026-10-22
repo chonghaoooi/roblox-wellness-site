@@ -290,13 +290,15 @@ export async function hasEntryOn(userId: number, date: string): Promise<boolean>
   return r.length > 0;
 }
 
-export type Meal = { id: number; username: string; caption: string | null; calories: number | null; protein: number | null; source: string | null; createdAt: string; upVotes: number; downVotes: number; myVote: number; swappedBy: string | null; photoV: number; photoCount: number; commentCount: number; commentText: string | null; commentAuthor: string | null };
+export type Meal = { id: number; username: string; caption: string | null; calories: number | null; protein: number | null; source: string | null; createdAt: string; upVotes: number; downVotes: number; upBy: string[]; myVote: number; swappedBy: string | null; photoV: number; photoCount: number; commentCount: number; commentText: string | null; commentAuthor: string | null };
 
 /** Latest retained meals, newest first. Image bytes are served by /api/meals/[id]. */
 export async function recentMeals(viewerId?: number): Promise<Meal[]> {
   return rows<Meal>(sql`
     select m.id, u.username, m.caption, l.calories, l.protein_g as protein, l.source, m.created_at::text as "createdAt",
-      v.up as "upVotes", v.down as "downVotes", v.mine as "myVote", eu.username as "swappedBy", coalesce(floor(extract(epoch from m.edited_at) * 1000), 0)::float8 as "photoV",
+      v.up as "upVotes", v.down as "downVotes", v.mine as "myVote",
+      coalesce((select array_agg(vu.username order by vu.username) from meal_votes mv join users vu on vu.id = mv.user_id where mv.meal_id = m.id and mv.value = 1), '{}') as "upBy",
+      eu.username as "swappedBy", coalesce(floor(extract(epoch from m.edited_at) * 1000), 0)::float8 as "photoV",
       ((m.data_b64 is not null)::int + (select count(*)::int from meal_photos mp where mp.meal_id = m.id)) as "photoCount",
       coalesce(c.total, 0)::int as "commentCount", c.text as "commentText", c.username as "commentAuthor"
     from meals m join users u on u.id = m.user_id left join logs l on l.id = m.log_id
@@ -316,13 +318,14 @@ export async function recentMeals(viewerId?: number): Promise<Meal[]> {
 
 // ---------- Steps ----------
 
-type Social = { upVotes: number; downVotes: number; myVote: number; commentCount: number; commentText: string | null; commentAuthor: string | null };
+type Social = { upVotes: number; downVotes: number; upBy: string[]; myVote: number; commentCount: number; commentText: string | null; commentAuthor: string | null };
 export type StepPost = Social & { id: number; username: string; steps: number; source: string | null; createdAt: string; bgId: number | null };
 export type WeighInPost = Social & { id: number; username: string; weightKg: number; prevKg: number | null; heightCm: number | null; createdAt: string };
 
 /** Votes and latest comment for step and weigh-in cards (both are rows of `logs`). */
 const logSocial = (viewerId?: number) => sql`
   v.up as "upVotes", v.down as "downVotes", v.mine as "myVote",
+  coalesce((select array_agg(vu.username order by vu.username) from log_votes lv join users vu on vu.id = lv.user_id where lv.log_id = x.id and lv.value = 1), '{}') as "upBy",
   coalesce(c.total, 0)::int as "commentCount", c.text as "commentText", c.username as "commentAuthor"`;
 const logSocialJoins = (viewerId?: number) => sql`
   left join lateral (
@@ -416,6 +419,7 @@ export type GymPost = {
   lifts: { exercise: string; kg: number; reps: number }[];
   upVotes: number;
   downVotes: number;
+  upBy: string[];
   myVote: number;
   commentCount: number;
   commentText: string | null;
@@ -432,6 +436,7 @@ export async function gymPosts(limit = 30, viewerId?: number): Promise<GymPost[]
            coalesce((select json_agg(json_build_object('exercise', l.exercise, 'kg', l.lift_kg, 'reps', l.reps) order by l.id)
                      from logs l where l.post_id = p.id), '[]'::json) as lifts,
            v.up as "upVotes", v.down as "downVotes", v.mine as "myVote",
+           coalesce((select array_agg(vu.username order by vu.username) from gym_post_votes gv join users vu on vu.id = gv.user_id where gv.post_id = p.id and gv.value = 1), '{}') as "upBy",
            coalesce(c.total, 0)::int as "commentCount", c.text as "commentText", c.username as "commentAuthor"
     from gym_posts p join users u on u.id = p.user_id
     left join lateral (

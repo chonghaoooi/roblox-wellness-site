@@ -38,7 +38,7 @@ export function MealCard({ m, me }: { m: Meal; me?: string }) {
                   </div>
                   <div className="flex items-center justify-between gap-1">
                     <time className="min-w-0 truncate text-[10px] leading-6 text-white/75" dateTime={m.createdAt} title={when(m.createdAt)}>{when(m.createdAt)}</time>
-                    <MealVotes mealId={m.id} upVotes={m.upVotes} downVotes={m.downVotes} myVote={m.myVote} loggedIn={Boolean(me)} />
+                    <MealVotes mealId={m.id} upVotes={m.upVotes} upBy={m.upBy} downVotes={m.downVotes} myVote={m.myVote} loggedIn={Boolean(me)} />
                   </div>
                   <MealComments mealId={m.id} owner={m.username} caption={m.caption} count={m.commentCount} text={m.commentText} author={m.commentAuthor} loggedIn={Boolean(me)} />
                 </div>
@@ -63,7 +63,7 @@ function MealExpanded({ m, me }: { m: Meal; me?: string }) {
         {m.swappedBy && <span className="rounded bg-[#7028d4] px-1 font-body text-[10px] leading-5 text-white">Swapped by {m.swappedBy}</span>}
       </p>
       {m.caption && <p className="break-words text-base font-semibold">{m.caption}</p>}
-      <MealVotes mealId={m.id} upVotes={m.upVotes} downVotes={m.downVotes} myVote={m.myVote} loggedIn={Boolean(me)} />
+      <MealVotes mealId={m.id} upVotes={m.upVotes} upBy={m.upBy} downVotes={m.downVotes} myVote={m.myVote} loggedIn={Boolean(me)} />
       <MealComments mealId={m.id} owner={m.username} caption={m.caption} count={m.commentCount} text={m.commentText} author={m.commentAuthor} loggedIn={Boolean(me)} />
     </>
   );
@@ -100,7 +100,7 @@ export function GymCard({ post, me, weightUnit, wide = "", compact }: { post: Gy
                   <div className="flex flex-col gap-1 border-t-2 border-black p-2">
                     <div className="flex items-center justify-between gap-1">
                       <time className="min-w-0 truncate text-[10px] leading-6 text-white/75" dateTime={post.createdAt} title={when(post.createdAt)}>{when(post.createdAt)}</time>
-                      <MealVotes kind="gym" mealId={post.id} upVotes={post.upVotes} downVotes={post.downVotes} myVote={post.myVote} loggedIn={Boolean(me)} />
+                      <MealVotes kind="gym" mealId={post.id} upVotes={post.upVotes} upBy={post.upBy} downVotes={post.downVotes} myVote={post.myVote} loggedIn={Boolean(me)} />
                     </div>
                     <MealComments kind="gym" mealId={post.id} owner={post.username} caption={post.notes} count={post.commentCount} text={post.commentText} author={post.commentAuthor} loggedIn={Boolean(me)} />
                   </div>
@@ -143,7 +143,7 @@ function GymCardCompact({ post, me, weightUnit }: { post: GymPost; me?: string; 
         </div>
         <div className="flex min-w-0 items-center justify-between gap-1">
           <time className="min-w-0 truncate text-[10px] leading-6 text-white/75" dateTime={post.createdAt} title={when(post.createdAt)}>{when(post.createdAt)}</time>
-          <MealVotes kind="gym" mealId={post.id} upVotes={post.upVotes} downVotes={post.downVotes} myVote={post.myVote} loggedIn={Boolean(me)} />
+          <MealVotes kind="gym" mealId={post.id} upVotes={post.upVotes} upBy={post.upBy} downVotes={post.downVotes} myVote={post.myVote} loggedIn={Boolean(me)} />
         </div>
         <MealComments kind="gym" mealId={post.id} owner={post.username} caption={post.notes} count={post.commentCount} text={post.commentText} author={post.commentAuthor} loggedIn={Boolean(me)} />
       </div>
@@ -170,7 +170,7 @@ function GymExpanded({ post, me, weightUnit }: { post: GymPost; me?: string; wei
           ))}
         </ul>
       )}
-      <MealVotes kind="gym" mealId={post.id} upVotes={post.upVotes} downVotes={post.downVotes} myVote={post.myVote} loggedIn={Boolean(me)} />
+      <MealVotes kind="gym" mealId={post.id} upVotes={post.upVotes} upBy={post.upBy} downVotes={post.downVotes} myVote={post.myVote} loggedIn={Boolean(me)} />
       <MealComments kind="gym" mealId={post.id} owner={post.username} caption={post.notes} count={post.commentCount} text={post.commentText} author={post.commentAuthor} loggedIn={Boolean(me)} />
     </>
   );
@@ -185,7 +185,7 @@ function scene(iso: string) {
 /** Step and weigh-in cards: same footprint as the gym card, with votes and comments on the log row. */
 function LogCardFrame({ id, username, bg, top, line, createdAt, me, votes, comments }: {
   id: number; username: string; bg?: string; top: React.ReactNode; line: React.ReactNode; createdAt: string; me?: string;
-  votes: { up: number; down: number; mine: number }; comments: { count: number; text: string | null; author: string | null };
+  votes: { up: number; down: number; mine: number; by: string[] }; comments: { count: number; text: string | null; author: string | null };
 }) {
   return (
     <li id={`log-${id}`} className="meal-card panel scroll-mt-36 overflow-hidden !rounded-xl">
@@ -202,7 +202,7 @@ function LogCardFrame({ id, username, bg, top, line, createdAt, me, votes, comme
         <div className="min-h-0 overflow-hidden text-xs leading-4">{line}</div>
         <div className="flex min-w-0 items-center justify-between gap-1">
           <time className="min-w-0 truncate text-[10px] leading-6 text-white/75" dateTime={createdAt} title={when(createdAt)}>{when(createdAt)}</time>
-          <MealVotes kind="log" mealId={id} upVotes={votes.up} downVotes={votes.down} myVote={votes.mine} loggedIn={Boolean(me)} />
+          <MealVotes kind="log" mealId={id} upVotes={votes.up} upBy={votes.by} downVotes={votes.down} myVote={votes.mine} loggedIn={Boolean(me)} />
         </div>
         <MealComments kind="log" mealId={id} owner={username} caption={null} count={comments.count} text={comments.text} author={comments.author} loggedIn={Boolean(me)} />
       </div>
@@ -214,7 +214,7 @@ function LogCardFrame({ id, username, bg, top, line, createdAt, me, votes, comme
 export function StepCard({ s, me }: { s: StepPost; me?: string }) {
   return (
     <LogCardFrame id={s.id} username={s.username} bg={s.bgId ? `/api/logs/${s.bgId}/background?w=480` : undefined} me={me} createdAt={s.createdAt}
-      votes={{ up: s.upVotes, down: s.downVotes, mine: s.myVote }} comments={{ count: s.commentCount, text: s.commentText, author: s.commentAuthor }}
+      votes={{ up: s.upVotes, down: s.downVotes, mine: s.myVote, by: s.upBy }} comments={{ count: s.commentCount, text: s.commentText, author: s.commentAuthor }}
       top={<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2.5 pt-8 text-left [text-shadow:0_1px_3px_rgb(0_0_0/0.7)]">
         <p className="neon font-display text-2xl leading-none">{s.steps.toLocaleString("en-US")}</p>
         <p className="font-display text-xs leading-4 text-white">STEPS</p>
@@ -231,7 +231,7 @@ export function WeighInCard({ w, me, weightUnit }: { w: WeighInPost; me?: string
   const bmi = w.heightCm ? calcBmi(w.weightKg, w.heightCm) : null;
   return (
     <LogCardFrame id={w.id} username={w.username} me={me} createdAt={w.createdAt}
-      votes={{ up: w.upVotes, down: w.downVotes, mine: w.myVote }} comments={{ count: w.commentCount, text: w.commentText, author: w.commentAuthor }}
+      votes={{ up: w.upVotes, down: w.downVotes, mine: w.myVote, by: w.upBy }} comments={{ count: w.commentCount, text: w.commentText, author: w.commentAuthor }}
       top={<div className="absolute inset-y-0 right-0 flex w-3/5 flex-col items-end justify-center gap-0.5 bg-gradient-to-l from-black/55 to-transparent p-3 text-right [text-shadow:0_1px_3px_rgb(0_0_0/0.7)]">
         <p className="neon font-display text-3xl leading-none">{show(w.weightKg)}<span className="ml-1 text-base">{weightUnit}</span></p>
         <p className="font-display text-xs leading-4 text-white">WEIGH-IN</p>

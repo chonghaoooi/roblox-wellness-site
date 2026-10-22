@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { voteMeal } from "@/app/meal-votes";
 import type { FormState } from "@/lib/validation";
 import { Avatar } from "./ui";
@@ -12,13 +12,22 @@ const idle = "border-violet-300/50 bg-violet-400/15";
 const selected = "border-violet-200 bg-violet-600/60";
 const count = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
 
-// Who liked it: up to 3 overlapping faces plus a +n, so the row stays narrow.
+// Who liked it: a small face button that opens the full list in a centred sheet (cards clip overflow, so not an inline popover).
 function Likers({ names }: { names: string[] }) {
+  const [open, setOpen] = useState(false);
   if (!names.length) return null;
-  return <span className="flex items-center" title={`Liked by ${names.join(", ")}`} aria-label={`Liked by ${names.join(", ")}`}>
-    {names.slice(0, 3).map((n, i) => <span key={n} className={i ? "-ml-2" : ""}><Avatar name={n} size={20} plain /></span>)}
-    {names.length > 3 && <span className="ml-0.5 text-[10px] font-semibold text-violet-100">+{names.length - 3}</span>}
-  </span>;
+  return <>
+    <button type="button" onClick={() => setOpen(true)} title="See who liked this" aria-label={`See who liked this. ${names.length} people.`} className="flex items-center rounded-md px-0.5 hover:bg-violet-400/30">
+      {names.slice(0, 2).map((n, i) => <span key={n} className={i ? "-ml-2" : ""}><Avatar name={n} size={16} plain /></span>)}
+    </button>
+    {open && <div role="dialog" aria-label="Liked by" onClick={() => setOpen(false)} className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+      <div onClick={(e) => e.stopPropagation()} className="panel max-h-[70vh] w-full max-w-xs overflow-y-auto p-4">
+        <p className="mb-2 font-display text-lg">👍 Liked by {names.length}</p>
+        <ul className="grid gap-2">{names.map((n) => <li key={n} className="flex items-center gap-2"><Avatar name={n} size={32} plain /><span className="truncate">{n}</span></li>)}</ul>
+        <button type="button" onClick={() => setOpen(false)} className="btn btn-purple mt-3 w-full">Close</button>
+      </div>
+    </div>}
+  </>;
 }
 
 export function MealVotes({ mealId, upVotes, downVotes, upBy = [], myVote, loggedIn, kind = "meal" }: { mealId: number; upVotes: number; downVotes: number; upBy?: string[]; myVote: number; loggedIn: boolean; kind?: "meal" | "gym" | "log" }) {

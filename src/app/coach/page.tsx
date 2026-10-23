@@ -6,13 +6,13 @@ import { coachMessages } from "@/db/schema";
 import { aiEnabled } from "@/lib/ai";
 import { getUser } from "@/lib/auth";
 
-export const metadata = { title: "Adil bot (coach)" };
+export const metadata = { title: "AI coach" };
 // The AI can take a while to answer; the default serverless limit on the free plan is shorter than that.
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 const NOTE =
-  "This is a bot with a texting style inspired by Adil. It is not the real Adil. It answers from your own logs (weight, meals, steps, gym check-ins, lifts and goals) plus anonymous community averages, and never sees anyone else's data. It is an AI, not a doctor: for pain, injuries, medical conditions or eating worries, talk to a professional. Your messages are saved so the chat continues next time.";
+  "These are bots with a texting style inspired by Adil and by BiteBro. They are not the real Adil or BiteBro; pick who to chat with at the top. It answers from your own logs (weight, meals, steps, gym check-ins, lifts and goals) plus anonymous community averages, and never sees anyone else's data. It is an AI, not a doctor: for pain, injuries, medical conditions or eating worries, talk to a professional. Your messages are saved so the chat continues next time.";
 
 export default async function Page() {
   const user = await getUser();
@@ -27,7 +27,7 @@ export default async function Page() {
 
   return (
     <div className="coach-shell mx-auto flex max-w-3xl flex-col gap-3 px-2 py-2 sm:gap-4 sm:px-4 sm:py-8">
-      <h1 className="rb-text text-4xl max-sm:sr-only">ADIL BOT</h1>
+      <h1 className="rb-text text-4xl max-sm:sr-only">AI COACH</h1>
       <p className="panel hidden px-4 py-3 text-base sm:block">{NOTE}</p>
       <details className="panel px-3 py-2 text-sm sm:hidden">
         <summary className="cursor-pointer font-display text-base">How this works</summary>

@@ -8,7 +8,8 @@ import { redirect } from "next/navigation";
 import { requireDb } from "@/db";
 import { aiCalls, coachMessages, gymPostPhotos, gymPosts, logBackgrounds, logs, mealPhotos, meals, settings, users } from "@/db/schema";
 import { type ChatMsg, aiEnabled, chat, estimateMeal, readSteps } from "@/lib/ai";
-import { COACH_SYSTEM, formatCoachContext } from "@/lib/coach";
+import { coachSystem, formatCoachContext } from "@/lib/coach";
+import { asPersona } from "@/lib/personas";
 import { userAverages, userEntries, userGymWeeks, userGymStreak, userLifts } from "@/lib/queries";
 import { createSession, destroySession, getSettings, getUser } from "@/lib/auth";
 import { addDays, todayStr } from "@/lib/dates";
@@ -219,7 +220,7 @@ const COACH_HISTORY_TURNS = 10;
 export type CoachReply = { reply?: string; error?: string };
 
 /** One coach turn: answers from the signed-in user's own data. Saves both sides of the exchange only on success. */
-export async function askCoach(message: string): Promise<CoachReply> {
+export async function askCoach(message: string, persona?: string): Promise<CoachReply> {
   const user = await getUser();
   if (!user) redirect("/login");
   if (!aiEnabled) return { error: "The coach isn't switched on yet." };
@@ -260,7 +261,7 @@ export async function askCoach(message: string): Promise<CoachReply> {
 
   let reply: string;
   try {
-    reply = await chat(`${COACH_SYSTEM}\n\nDATA (about the person you are talking to):\n${context}`, history);
+    reply = await chat(`${coachSystem(asPersona(persona))}\n\nDATA (about the person you are talking to):\n${context}`, history);
   } catch (e) {
     console.error("[coach]", e instanceof Error ? e.message : e);
     return { error: "The coach couldn't answer right now. Try again in a moment." };

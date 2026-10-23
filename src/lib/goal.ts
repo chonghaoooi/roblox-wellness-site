@@ -9,7 +9,7 @@ export async function syncCalorieGoals(userId?: number): Promise<{ username: str
     select u.id, u.username,
       (select weight_kg::float8 from logs where user_id = u.id and weight_kg is not null order by date desc, id desc limit 1) as w,
       (select height_cm::float8 from logs where user_id = u.id and height_cm is not null order by date desc, id desc limit 1) as h
-    from users u where u.username <> 'adilbot' ${userId === undefined ? sql`` : sql`and u.id = ${userId}`}`)) as unknown as {
+    from users u where u.username not in ('adilbot', 'bitebro') ${userId === undefined ? sql`` : sql`and u.id = ${userId}`}`)) as unknown as {
     rows: { id: number; username: string; w: number | null; h: number | null }[];
   };
   const out: { username: string; goal: number }[] = [];

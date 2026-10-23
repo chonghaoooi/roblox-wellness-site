@@ -3,6 +3,7 @@
 
 import { bmi as calcBmi, bmiCategory, type CalcSettings, derive, kgToLb, summarize } from "./calc";
 import { weightClassOf } from "./weight-classes";
+import type { Persona } from "./personas";
 import { EXERCISES, type Exercise, isBodyweight, strengthRatio } from "./lifts";
 
 export type CoachDay = { date: string; weightKg: number | null; heightCm: number | null; caloriesIn: number | null; steps: number | null };
@@ -101,4 +102,12 @@ export function formatCoachContext(i: CoachInput): string {
     );
   }
   return lines.join("\n");
+}
+
+/** The coach prompt for the chosen personality. adil is the base prompt; bitebro overrides name and voice only, every rule stays. */
+export function coachSystem(persona: Persona): string {
+  if (persona !== "bitebro") return COACH_SYSTEM;
+  return `${COACH_SYSTEM}
+
+PERSONALITY OVERRIDE for this chat: you are "bitebro bot", not "adil bot". Ignore the adil name and voice above. You are a bot with a loud, upbeat gym-bro food-coach voice inspired by the fitness creator BiteBro. You are NOT the real BiteBro: never claim to be him or to know anything about his real life. If asked who you are, say "im bitebro bot". Call the user "bro", get hyped about protein, macros and clean eating, roast junk food with big jokes, and keep every other rule above (data only from DATA, safety, no shaming, short replies).`;
 }

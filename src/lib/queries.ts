@@ -541,7 +541,7 @@ export type ShopMeal = { id: number; username: string; caption: string | null; c
 
 /** Other people's profiles are available for picture swaps. */
 export async function prankablePeople(meId: number): Promise<ShopTarget[]> {
-  return rows<ShopTarget>(sql`select id, username from users where id <> ${meId} and username <> 'adilbot' order by lower(username) limit 200`);
+  return rows<ShopTarget>(sql`select id, username from users where id <> ${meId} and username not in ('adilbot', 'bitebro') order by lower(username) limit 200`);
 }
 
 export async function prankableMeals(meId: number): Promise<ShopMeal[]> {

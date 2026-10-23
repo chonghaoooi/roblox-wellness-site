@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { askCoach, clearCoach } from "@/app/actions";
 import { IconSend, IconTrash } from "./icons";
+import { PERSONA_IDS, PERSONAS, type Persona } from "@/lib/personas";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -27,7 +28,11 @@ const SUGGESTIONS = [
   "How do I hit my step goal?",
 ];
 
-function BotTile({ size = 36 }: { size?: number }) {
+function BotTile({ size = 36, persona = "adil" }: { size?: number; persona?: Persona }) {
+  if (persona === "bitebro") {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src="/api/avatar/bitebro" alt="" width={size} height={size} className="shrink-0 rounded-lg border-[3px] border-black object-cover" style={{ width: size, height: size }} aria-hidden />;
+  }
   return (
     <span className="icon-tile shrink-0 !rounded-lg !border-[3px]" style={{ width: size, height: size }} aria-hidden>
       <Image src="/assets/dumbbell.svg" alt="" width={size} height={size} className="absolute inset-1 z-10 h-[calc(100%-0.5rem)] w-[calc(100%-0.5rem)]" />
@@ -41,6 +46,16 @@ export function CoachChat({ initial, aiOn }: { initial: Msg[]; aiOn: boolean }) 
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const [persona, setPersona] = useState<Persona>("adil");
+  const bot = PERSONAS[persona];
+  useEffect(() => {
+    const saved = localStorage.getItem("coach-persona");
+    if (saved === "bitebro") setPersona("bitebro");
+  }, []);
+  const pick = (p: Persona) => {
+    setPersona(p);
+    localStorage.setItem("coach-persona", p);
+  };
 
   // Scroll the message list itself (not the page) to the newest message.
   useEffect(() => {
@@ -56,7 +71,7 @@ export function CoachChat({ initial, aiOn }: { initial: Msg[]; aiOn: boolean }) 
     setMsgs((m) => [...m, { role: "user", content }]);
     setText("");
     try {
-      const r = await askCoach(content);
+      const r = await askCoach(content, persona);
       if (r.reply) setMsgs((m) => [...m, { role: "assistant", content: r.reply! }]);
       else {
         setError(r.error ?? "Something went wrong.");
@@ -83,10 +98,17 @@ export function CoachChat({ initial, aiOn }: { initial: Msg[]; aiOn: boolean }) 
     <div className="coach-chat panel flex min-h-0 flex-col overflow-hidden !p-0">
       {/* Top bar */}
       <div className="flex items-center gap-3 border-b-4 border-black bg-black/50 px-3 py-2">
-        <BotTile size={40} />
+        <BotTile size={40} persona={persona} />
         <div className="min-w-0 flex-1">
-          <p className="font-display text-xl leading-tight">adil bot</p>
-          <p className="truncate text-xs font-semibold text-neon">AI coach · not the real Adil</p>
+          <p className="font-display text-xl leading-tight">{bot.name}</p>
+          <p className="truncate text-xs font-semibold text-neon">AI coach · not the real {bot.real}</p>
+        </div>
+        <div className="flex gap-1" role="group" aria-label="Choose who to chat with">
+          {PERSONA_IDS.map((id) => (
+            <button key={id} type="button" onClick={() => pick(id)} aria-pressed={persona === id} title={`Chat with ${PERSONAS[id].name}`} className={`rounded-lg border-[3px] ${persona === id ? "border-neon" : "border-black opacity-60"}`}>
+              <BotTile size={32} persona={id} />
+            </button>
+          ))}
         </div>
         {msgs.length > 0 && (
           <button type="button" onClick={clear} disabled={pending} className="btn btn-red !min-h-10 !px-3 !py-1 !text-sm" aria-label="Clear chat">
@@ -97,11 +119,11 @@ export function CoachChat({ initial, aiOn }: { initial: Msg[]; aiOn: boolean }) 
       </div>
 
       {/* Messages */}
-      <div ref={listRef} className="coach-list min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4" role="log" aria-live="polite" aria-label="Conversation with adil bot">
+      <div ref={listRef} className="coach-list min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4" role="log" aria-live="polite" aria-label={`Conversation with ${bot.name}`}>
         {msgs.length === 0 && (
           <div className="flex flex-col items-center gap-4 py-4 text-center">
-            <BotTile size={72} />
-            <p className="max-w-xs text-lg font-semibold">yo im adil bot. i can see ur logs: weight, meals, steps, gym and lifts. ask me anything or tap one</p>
+            <BotTile size={72} persona={persona} />
+            <p className="max-w-xs text-lg font-semibold">yo im {bot.name}. i can see ur logs: weight, meals, steps, gym and lifts. ask me anything or tap one</p>
             <div className="grid w-full max-w-sm gap-2">
               {SUGGESTIONS.map((s) => (
                 <button key={s} type="button" disabled={pending || !aiOn} onClick={() => send(s)} className="btn btn-blue !justify-start !text-left !text-base">
@@ -118,7 +140,7 @@ export function CoachChat({ initial, aiOn }: { initial: Msg[]; aiOn: boolean }) 
             </div>
           ) : (
             <div key={i} className="flex max-w-[94%] items-start gap-2">
-              <BotTile size={32} />
+              <BotTile size={32} persona={persona} />
               <div className="min-w-0 space-y-1.5">
                 {toBubbles(m.content).map((b, j) => (
                   <div key={j} className="w-fit max-w-full whitespace-pre-wrap break-words rounded-2xl rounded-tl-sm border-[3px] border-black bg-[#0b0b12] px-3.5 py-2 text-[1.02rem]">
@@ -130,8 +152,8 @@ export function CoachChat({ initial, aiOn }: { initial: Msg[]; aiOn: boolean }) 
           ),
         )}
         {pending && (
-          <div className="flex items-start gap-2" role="status" aria-label="adil bot is typing">
-            <BotTile size={32} />
+          <div className="flex items-start gap-2" role="status" aria-label={`${bot.name} is typing`}>
+            <BotTile size={32} persona={persona} />
             <div className="flex gap-1.5 rounded-2xl rounded-tl-sm border-[3px] border-black bg-[#0b0b12] px-4 py-3.5">
               {[0, 1, 2].map((d) => (
                 <span key={d} className="typing-dot h-2.5 w-2.5 rounded-full bg-neon" style={{ animationDelay: `${d * 160}ms` }} />
@@ -165,7 +187,7 @@ export function CoachChat({ initial, aiOn }: { initial: Msg[]; aiOn: boolean }) 
           className="flex gap-2"
         >
           <label htmlFor="coach-input" className="sr-only">
-            Message adil bot
+            Message {bot.name}
           </label>
           <input
             id="coach-input"
@@ -173,7 +195,7 @@ export function CoachChat({ initial, aiOn }: { initial: Msg[]; aiOn: boolean }) 
             value={text}
             onChange={(e) => setText(e.target.value)}
             maxLength={500}
-            placeholder={aiOn ? "message adil bot…" : "coach is not switched on yet"}
+            placeholder={aiOn ? `message ${bot.name}…` : "coach is not switched on yet"}
             disabled={!aiOn}
             autoComplete="off"
             enterKeyHint="send"

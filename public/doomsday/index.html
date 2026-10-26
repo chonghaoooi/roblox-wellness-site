@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#170803">
+  <meta name="description" content="A live countdown to Avengers: Doomsday, matching Marvel's official December 18, 2026 clock.">
+  <meta property="og:title" content="Doomsday Is Coming">
+  <meta property="og:description" content="A live countdown to Avengers: Doomsday.">
+  <meta property="og:image" content="/doomsday/hero.png">
+  <title>Doomsday Is Coming — Live Countdown</title>
+  <link rel="icon" href="/doomsday/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/doomsday/hero.png" as="image">
+  <link rel="stylesheet" href="/doomsday/style.css">
+  <script type="module" src="/doomsday/app.mjs"></script>
+  <script type="module" src="/doomsday/music.mjs"></script>
+  <script type="module" src="/doomsday/fire.mjs"></script>
+</head>
+<body>
+  <main class="scene">
+    <div class="backdrop" aria-hidden="true"></div>
+    <div class="shade" aria-hidden="true"></div>
+    <div class="fire-glow" aria-hidden="true"></div>
+    <canvas class="fire-canvas" aria-hidden="true"></canvas>
+
+    <section class="countdown" aria-labelledby="headline">
+      <h1 id="headline">DOOMSDAY IS COMING</h1>
+      <div class="timer" role="timer" aria-label="Time until Avengers: Doomsday">
+        <div class="unit"><span class="number" data-unit="months">--</span><span class="label">MONTHS</span></div>
+        <span class="colon" aria-hidden="true">:</span>
+        <div class="unit"><span class="number" data-unit="days">--</span><span class="label">DAYS</span></div>
+        <span class="colon" aria-hidden="true">:</span>
+        <div class="unit"><span class="number" data-unit="hours">--</span><span class="label">HOURS</span></div>
+        <span class="colon" aria-hidden="true">:</span>
+        <div class="unit"><span class="number" data-unit="minutes">--</span><span class="label">MINUTES</span></div>
+        <span class="colon" aria-hidden="true">:</span>
+        <div class="unit"><span class="number" data-unit="seconds">--</span><span class="label">SECONDS</span></div>
+      </div>
+      <p id="status" class="sr-only" aria-live="polite"></p>
+    </section>
+
+  </main>
+</body>
+</html>

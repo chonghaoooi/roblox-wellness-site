@@ -1,0 +1,31 @@
+:root { color-scheme: dark; font-family: Arial, Helvetica, sans-serif; }
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: #170803; }
+body { overflow-x: hidden; }
+.scene { position: relative; min-height: 100svh; isolation: isolate; display: flex; flex-direction: column; color: #fff; overflow: hidden; }
+.backdrop, .shade, .fire-glow, .fire-canvas { position: absolute; inset: 0; pointer-events: none; }
+.backdrop { z-index: -3; background: url('/doomsday/hero.png') center top / cover no-repeat; animation: slow-pan 28s ease-in-out infinite alternate; transform-origin: 50% 0; }
+.shade { z-index: -2; background: linear-gradient(180deg, rgba(10,2,0,.48) 0%, transparent 25%, transparent 48%, rgba(6,2,1,.32) 62%, rgba(4,1,1,.84) 100%), linear-gradient(90deg, rgba(18,0,0,.12), transparent 55%); }
+.countdown { width: min(100%, 1080px); margin: auto auto clamp(3.4rem, 6.6vh, 6rem); padding: 0 1rem; text-align: center; text-shadow: 0 3px 18px rgba(0,0,0,.75); }
+h1 { margin: 0 0 .55rem; font-size: clamp(1.65rem, 3.2vw, 3.5rem); line-height: 1.15; font-weight: 900; letter-spacing: .135em; }
+.timer { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr) 1.7rem) minmax(0, 1fr); align-items: start; width: min(100%, 980px); margin: 0 auto; font-variant-numeric: tabular-nums lining-nums; }
+.unit { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.number { display: block; font-size: clamp(3.1rem, 6.1vw, 6.7rem); line-height: 1.05; letter-spacing: .045em; font-weight: 800; }
+.label { margin-top: .42rem; font-size: clamp(.64rem, .9vw, .85rem); font-weight: 800; letter-spacing: .12em; }
+.colon { padding-top: .02em; font-size: clamp(2.6rem, 5vw, 5.5rem); line-height: 1.05; font-weight: 500; }
+.fire-glow { z-index: -1; top: auto; height: 40%; background: radial-gradient(ellipse 28% 74% at 9% 120%, rgba(255,79,10,.45), transparent 85%), radial-gradient(ellipse 26% 90% at 89% 120%, rgba(255,95,16,.46), transparent 85%), radial-gradient(ellipse 38% 42% at 50% 126%, rgba(233,55,5,.28), transparent 90%); filter: blur(18px); mix-blend-mode: screen; animation: fire-breathe 3.5s ease-in-out infinite alternate; }
+.fire-canvas { z-index: -1; width: 100%; height: 100%; mix-blend-mode: screen; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@keyframes slow-pan { from { transform: scale(1) translateX(-.3%); } to { transform: scale(1.03) translateX(.3%); } }
+@keyframes fire-breathe { from { transform: scaleX(.94) translateY(1%); opacity: .72; } to { transform: scaleX(1.06) translateY(-2%); opacity: 1; } }
+@media (max-width: 700px) {
+  .backdrop { background-position: 48% top; }
+  .shade { background: linear-gradient(180deg, rgba(10,2,0,.58), transparent 25%, rgba(4,1,1,.12) 45%, rgba(4,1,1,.88) 85%, rgba(4,1,1,.95)); }
+  .countdown { margin-bottom: clamp(2rem, 7vh, 4rem); }
+  h1 { letter-spacing: .07em; }
+  .timer { grid-template-columns: repeat(4, minmax(0, 1fr) .5rem) minmax(0, 1fr); }
+  .number { font-size: clamp(1.55rem, 7.2vw, 3.1rem); letter-spacing: 0; }
+  .colon { font-size: clamp(1.4rem, 6vw, 2.5rem); }
+  .label { font-size: clamp(.43rem, 1.6vw, .65rem); letter-spacing: .03em; }
+}
+@media (prefers-reduced-motion: reduce) { .backdrop, .fire-glow { animation: none; } }

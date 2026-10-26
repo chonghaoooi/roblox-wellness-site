@@ -1,6 +1,9 @@
 export default {
   reactStrictMode: true,
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
+  async rewrites() {
+    return [{ source: "/doomsday", destination: "/doomsday/index.html" }];
+  },
   async headers() {
     return [
       { source: "/:path*", headers: [{ key: "Link", value: '</llms.txt>; rel="describedby"; type="text/plain"' }] },

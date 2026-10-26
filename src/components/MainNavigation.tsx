@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IconGym, IconHome, IconMeals, IconTrends } from "./icons";
+import { IconGym, IconHome, IconMeals, IconSites } from "./icons";
 
 const destinations = [
   { href: "/", label: "Home", Icon: IconHome },
   { href: "/posts", label: "Posts", Icon: IconMeals },
   { href: "/gym", label: "Gym", Icon: IconGym },
-  { href: "/trends", label: "Trends", Icon: IconTrends },
+  { href: "/sites", label: "Sites", Icon: IconSites },
 ] as const;
 
 export function MainNavigation() {

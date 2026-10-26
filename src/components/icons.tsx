@@ -17,4 +17,5 @@ export const IconBell = () => <I><path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5zM10 2
 export const IconMeals = () => <I><path d="M4 3v6c0 3 6 3 6 0V3M7 3v18M19 3c-4 3-4 9 0 9V3v18" /></I>;
 export const IconGym = () => <I><path d="M3 8v8M7 5v14M17 5v14M21 8v8M7 12h10" /></I>;
 export const IconTrends = () => <I><path d="M4 20V10M12 20V4M20 20v-7" /></I>;
+export const IconSites = () => <I><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" /></I>;
 export const IconShop = () => <I><path d="M3 9h18l-2 11H5zM8 9l3-6M16 9l-3-6M9 13v3M15 13v3" /></I>;

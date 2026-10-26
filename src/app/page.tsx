@@ -1,5 +1,6 @@
 import { DailyLeaderboards } from "@/components/DailyLeaderboards";
 import { Leaderboard } from "@/components/Leaderboard";
+import { TrendsSections } from "@/components/TrendsSections";
 import { IconPlus, IconUserPlus } from "@/components/icons";
 import { LinkButton, SectionTitle, fmt } from "@/components/ui";
 import { getSettings, getUser } from "@/lib/auth";
@@ -24,6 +25,7 @@ export default async function Home() {
   const loggedToday = dayRows.some((row) => row.username === me);
 
   return (
+    <>
     <section aria-label="Today's leaderboards" className="mx-auto max-w-4xl px-3 py-6 sm:px-4 sm:py-8">
       <SectionTitle>DAILY LEADERBOARDS</SectionTitle>
       <DailyLeaderboards boards={{
@@ -41,5 +43,7 @@ export default async function Home() {
         </span> : <LinkButton href="/signup" color="purple" icon={<IconUserPlus />}>Join and log your day</LinkButton>}
       </div>
     </section>
+    <TrendsSections />
+    </>
   );
 }
